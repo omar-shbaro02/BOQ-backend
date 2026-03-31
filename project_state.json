@@ -1,0 +1,808 @@
+{
+  "agents": [
+    {
+      "id": "agent-1",
+      "agent_name": "WBS_Extractor_01",
+      "wbs_category": "Doors and Partitions",
+      "sequence": 1,
+      "status": "active",
+      "task": "Extract all valid activities from the BOQ under the Doors and Partitions WBS category, skip zero quantity entries, and split compound works into scheduler-ready subtasks.",
+      "language_guidelines": {
+        "clarity": "Use concise, descriptive construction terminology.",
+        "granularity": "Decompose tasks into sequential, detailed subtasks.",
+        "formatting": "Skip zero quantity work and vague wording."
+      },
+      "template_output": [
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Partitions - Marking"
+        },
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Partitions - Framing"
+        },
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Doors - Frame Installation"
+        },
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Doors - Shutter Hanging"
+        }
+      ],
+      "latest_output": [
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Partitions - Marking"
+        },
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Partitions - Framing"
+        },
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Doors - Frame Installation"
+        },
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Doors - Shutter Hanging"
+        }
+      ],
+      "last_run": "2026-03-11T12:40:39"
+    },
+    {
+      "id": "agent-2",
+      "agent_name": "WBS_Extractor_02",
+      "wbs_category": "Wood Works",
+      "sequence": 2,
+      "status": "active",
+      "task": "Extract Wood Works activities, ignore zero quantity items, and split joinery into measurement, fabrication, finishing, and installation steps.",
+      "language_guidelines": {
+        "clarity": "Use full descriptive task names.",
+        "granularity": "Subdivide fabrication, finishing, and installation steps.",
+        "formatting": "Only include measurable, real tasks with quantity."
+      },
+      "template_output": [
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Site Measurements"
+        },
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Fabrication"
+        },
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Finishing"
+        },
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Installation"
+        }
+      ],
+      "latest_output": [
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Site Measurements"
+        },
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Fabrication"
+        },
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Finishing"
+        },
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Installation"
+        }
+      ],
+      "last_run": null
+    },
+    {
+      "id": "agent-3",
+      "agent_name": "WBS_Extractor_03",
+      "wbs_category": "Ceiling",
+      "sequence": 3,
+      "status": "active",
+      "task": "Extract Ceiling activities, ignore zero quantity lines, and separate framing, board fixing, putty, and paint coats into clean JSON entries.",
+      "language_guidelines": {
+        "clarity": "Include action and material in activity names.",
+        "granularity": "Split multi-step work into sequential subtasks.",
+        "formatting": "Skip non-applicable entries."
+      },
+      "template_output": [
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Framing"
+        },
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Board Fixing"
+        },
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Putty"
+        },
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Paint Final Coat"
+        }
+      ],
+      "latest_output": [
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Framing"
+        },
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Board Fixing"
+        },
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Putty"
+        },
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Paint Final Coat"
+        }
+      ],
+      "last_run": null
+    },
+    {
+      "id": "agent-4",
+      "agent_name": "WBS_Extractor_04",
+      "wbs_category": "Floor Finishes",
+      "sequence": 4,
+      "status": "active",
+      "task": "Identify floor finish activities, exclude zero quantity lines, and split tiling and finish systems into layout, installation, and closeout steps.",
+      "language_guidelines": {
+        "clarity": "Avoid shorthand in activity names.",
+        "granularity": "List each construction phase.",
+        "formatting": "Avoid duplicate or null entries."
+      },
+      "template_output": [
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Floor Finishes - Layout"
+        },
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Ceramic Tiles - Setting"
+        },
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Ceramic Tiles - Grouting"
+        },
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Raised Floor - Installation"
+        }
+      ],
+      "latest_output": [
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Floor Finishes - Layout"
+        },
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Ceramic Tiles - Setting"
+        },
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Ceramic Tiles - Grouting"
+        },
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Raised Floor - Installation"
+        }
+      ],
+      "last_run": null
+    },
+    {
+      "id": "agent-5",
+      "agent_name": "WBS_Extractor_05",
+      "wbs_category": "Wall Finishes",
+      "sequence": 5,
+      "status": "active",
+      "task": "Extract Wall Finishes tasks, exclude zero quantity items, and break painting into putty and coat-by-coat scheduling activities.",
+      "language_guidelines": {
+        "clarity": "Use clear scheduler-ready wording.",
+        "granularity": "Split each painting or finishing layer.",
+        "formatting": "Filter non-workable entries."
+      },
+      "template_output": [
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Wall Finishes - Putty"
+        },
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Paint - First Coat"
+        },
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Paint - Second Coat"
+        },
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Paint - Final Coat"
+        }
+      ],
+      "latest_output": [
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Wall Finishes - Putty"
+        },
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Paint - First Coat"
+        },
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Paint - Second Coat"
+        },
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Paint - Final Coat"
+        }
+      ],
+      "last_run": null
+    },
+    {
+      "id": "agent-6",
+      "agent_name": "WBS_Extractor_06",
+      "wbs_category": "HVAC",
+      "sequence": 6,
+      "status": "active",
+      "task": "Capture HVAC tasks, skip zero quantity lines, and split systems like ducting into fabrication, first fix, second fix, insulation, and finals.",
+      "language_guidelines": {
+        "clarity": "Use MEP-compliant language.",
+        "granularity": "Break down work by component and stage.",
+        "formatting": "Do not include zero or undefined work."
+      },
+      "template_output": [
+        {
+          "WBS": "HVAC",
+          "Activity Name": "Ducting - Fabrication"
+        },
+        {
+          "WBS": "HVAC",
+          "Activity Name": "Ducting - First Fix"
+        },
+        {
+          "WBS": "HVAC",
+          "Activity Name": "Ducting - Insulation"
+        },
+        {
+          "WBS": "HVAC",
+          "Activity Name": "FCU - Final Installation"
+        }
+      ],
+      "latest_output": [
+        {
+          "WBS": "HVAC",
+          "Activity Name": "Ducting - Fabrication"
+        },
+        {
+          "WBS": "HVAC",
+          "Activity Name": "Ducting - First Fix"
+        },
+        {
+          "WBS": "HVAC",
+          "Activity Name": "Ducting - Insulation"
+        },
+        {
+          "WBS": "HVAC",
+          "Activity Name": "FCU - Final Installation"
+        }
+      ],
+      "last_run": null
+    },
+    {
+      "id": "agent-7",
+      "agent_name": "WBS_Extractor_07",
+      "wbs_category": "Electrical",
+      "sequence": 7,
+      "status": "active",
+      "task": "Extract electrical tasks for lighting, power, low current, and fire alarm, ignore zero quantity lines, and split them into conduit, wiring, and fixture installation phases.",
+      "language_guidelines": {
+        "clarity": "Use IEC or electrical standard terms.",
+        "granularity": "Separate low-current and high-power systems.",
+        "formatting": "Format for P6 or Excel use."
+      },
+      "template_output": [
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Lighting - Conduit First Fix"
+        },
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Lighting - Wiring First Fix"
+        },
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Power - Socket Installation"
+        },
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Fire Alarm - Control Panel Installation"
+        }
+      ],
+      "latest_output": [
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Lighting - Conduit First Fix"
+        },
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Lighting - Wiring First Fix"
+        },
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Power - Socket Installation"
+        },
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Fire Alarm - Control Panel Installation"
+        }
+      ],
+      "last_run": null
+    },
+    {
+      "id": "agent-8",
+      "agent_name": "WBS_Extractor_08",
+      "wbs_category": "Miscellaneous",
+      "sequence": 8,
+      "status": "active",
+      "task": "Extract miscellaneous work such as waterproofing, signage, and temporary works, skip zero quantity lines, and rewrite vague items into scope-based tasks.",
+      "language_guidelines": {
+        "clarity": "Avoid placeholders or generic text.",
+        "granularity": "Convert umbrella items into real tasks.",
+        "formatting": "Keep one task per line."
+      },
+      "template_output": [
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Waterproofing - Membrane Installation"
+        },
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Signage - Installation"
+        },
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Testing - Plumbing Leak Check"
+        },
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Branding - Accessories Fixing"
+        }
+      ],
+      "latest_output": [
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Waterproofing - Membrane Installation"
+        },
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Signage - Installation"
+        },
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Testing - Plumbing Leak Check"
+        },
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Branding - Accessories Fixing"
+        }
+      ],
+      "last_run": null
+    },
+    {
+      "id": "agent-9",
+      "agent_name": "WBS_Extractor_09",
+      "wbs_category": "Outdoor Areas",
+      "sequence": 9,
+      "status": "active",
+      "task": "Capture external and landlord-driven works, skip zero quantity lines, and turn vague approval items into schedulable coordination activities.",
+      "language_guidelines": {
+        "clarity": "Describe approval steps and access tasks clearly.",
+        "granularity": "Show real tasks even for coordination items.",
+        "formatting": "Avoid placeholders or notes."
+      },
+      "template_output": [
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "Landlord Approval - Shop Drawings"
+        },
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "External Paving - Installation"
+        },
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "Access Coordination - Permit Clearance"
+        },
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "Landlord Signoff - Final Walkthrough"
+        }
+      ],
+      "latest_output": [
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "Landlord Approval - Shop Drawings"
+        },
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "External Paving - Installation"
+        },
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "Access Coordination - Permit Clearance"
+        },
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "Landlord Signoff - Final Walkthrough"
+        }
+      ],
+      "last_run": null
+    }
+  ],
+  "planner": {
+    "id": "agent-10",
+    "name": "Project Manager Agent",
+    "role": "PMP construction planner",
+    "goal": "Create P6-ready schedules from BOQ, WBS, and scope inputs without follow-up questions.",
+    "flow": [
+      "Read uploaded BOQ",
+      "Extract tasks",
+      "Map to WBS",
+      "Estimate durations from benchmarks",
+      "Sequence with natural predecessors",
+      "Output Primavera-ready Excel"
+    ],
+    "status": "ready",
+    "last_run": null,
+    "export_file": "primavera_schedule_import.xlsx",
+    "export_updated_at": "2026-03-31T10:19:19"
+  },
+  "timeline": {
+    "start_date": "2026-03-11",
+    "finish_date": "2026-06-25",
+    "schedule": [
+      {
+        "wbs": "Preliminaries",
+        "activity_name": "Site Mobilization",
+        "duration_days": 5,
+        "predecessors": "Project Start",
+        "start_date": "2026-03-11",
+        "finish_date": "2026-03-15"
+      },
+      {
+        "wbs": "Doors and Partitions",
+        "activity_name": "Partitions - Marking",
+        "duration_days": 2,
+        "predecessors": "Site Mobilization",
+        "start_date": "2026-03-16",
+        "finish_date": "2026-03-17"
+      },
+      {
+        "wbs": "Doors and Partitions",
+        "activity_name": "Partitions - Framing",
+        "duration_days": 4,
+        "predecessors": "Partitions - Marking",
+        "start_date": "2026-03-18",
+        "finish_date": "2026-03-21"
+      },
+      {
+        "wbs": "Doors and Partitions",
+        "activity_name": "Doors - Frame Installation",
+        "duration_days": 3,
+        "predecessors": "Partitions - Framing",
+        "start_date": "2026-03-22",
+        "finish_date": "2026-03-24"
+      },
+      {
+        "wbs": "Doors and Partitions",
+        "activity_name": "Doors - Shutter Hanging",
+        "duration_days": 2,
+        "predecessors": "Doors - Frame Installation",
+        "start_date": "2026-03-25",
+        "finish_date": "2026-03-26"
+      },
+      {
+        "wbs": "Wood Works",
+        "activity_name": "Joinery - Site Measurements",
+        "duration_days": 2,
+        "predecessors": "Doors - Shutter Hanging",
+        "start_date": "2026-03-27",
+        "finish_date": "2026-03-28"
+      },
+      {
+        "wbs": "Wood Works",
+        "activity_name": "Joinery - Fabrication",
+        "duration_days": 4,
+        "predecessors": "Joinery - Site Measurements",
+        "start_date": "2026-03-29",
+        "finish_date": "2026-04-01"
+      },
+      {
+        "wbs": "Wood Works",
+        "activity_name": "Joinery - Finishing",
+        "duration_days": 3,
+        "predecessors": "Joinery - Fabrication",
+        "start_date": "2026-04-02",
+        "finish_date": "2026-04-04"
+      },
+      {
+        "wbs": "Wood Works",
+        "activity_name": "Joinery - Installation",
+        "duration_days": 3,
+        "predecessors": "Joinery - Finishing",
+        "start_date": "2026-04-05",
+        "finish_date": "2026-04-07"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Ceiling - Framing",
+        "duration_days": 3,
+        "predecessors": "Joinery - Installation",
+        "start_date": "2026-04-08",
+        "finish_date": "2026-04-10"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Ceiling - Board Fixing",
+        "duration_days": 3,
+        "predecessors": "Ceiling - Framing",
+        "start_date": "2026-04-11",
+        "finish_date": "2026-04-13"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Ceiling - Putty",
+        "duration_days": 2,
+        "predecessors": "Ceiling - Board Fixing",
+        "start_date": "2026-04-14",
+        "finish_date": "2026-04-15"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Ceiling - Paint Final Coat",
+        "duration_days": 2,
+        "predecessors": "Ceiling - Putty",
+        "start_date": "2026-04-16",
+        "finish_date": "2026-04-17"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Floor Finishes - Layout",
+        "duration_days": 2,
+        "predecessors": "Ceiling - Paint Final Coat",
+        "start_date": "2026-04-18",
+        "finish_date": "2026-04-19"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Ceramic Tiles - Setting",
+        "duration_days": 4,
+        "predecessors": "Floor Finishes - Layout",
+        "start_date": "2026-04-20",
+        "finish_date": "2026-04-23"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Ceramic Tiles - Grouting",
+        "duration_days": 2,
+        "predecessors": "Ceramic Tiles - Setting",
+        "start_date": "2026-04-24",
+        "finish_date": "2026-04-25"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Raised Floor - Installation",
+        "duration_days": 3,
+        "predecessors": "Ceramic Tiles - Grouting",
+        "start_date": "2026-04-26",
+        "finish_date": "2026-04-28"
+      },
+      {
+        "wbs": "Wall Finishes",
+        "activity_name": "Wall Finishes - Putty",
+        "duration_days": 2,
+        "predecessors": "Raised Floor - Installation",
+        "start_date": "2026-04-29",
+        "finish_date": "2026-04-30"
+      },
+      {
+        "wbs": "Wall Finishes",
+        "activity_name": "Paint - First Coat",
+        "duration_days": 2,
+        "predecessors": "Wall Finishes - Putty",
+        "start_date": "2026-05-01",
+        "finish_date": "2026-05-02"
+      },
+      {
+        "wbs": "Wall Finishes",
+        "activity_name": "Paint - Second Coat",
+        "duration_days": 2,
+        "predecessors": "Paint - First Coat",
+        "start_date": "2026-05-03",
+        "finish_date": "2026-05-04"
+      },
+      {
+        "wbs": "Wall Finishes",
+        "activity_name": "Paint - Final Coat",
+        "duration_days": 2,
+        "predecessors": "Paint - Second Coat",
+        "start_date": "2026-05-05",
+        "finish_date": "2026-05-06"
+      },
+      {
+        "wbs": "HVAC",
+        "activity_name": "Ducting - Fabrication",
+        "duration_days": 4,
+        "predecessors": "Paint - Final Coat",
+        "start_date": "2026-05-07",
+        "finish_date": "2026-05-10"
+      },
+      {
+        "wbs": "HVAC",
+        "activity_name": "Ducting - First Fix",
+        "duration_days": 5,
+        "predecessors": "Ducting - Fabrication",
+        "start_date": "2026-05-11",
+        "finish_date": "2026-05-15"
+      },
+      {
+        "wbs": "HVAC",
+        "activity_name": "Ducting - Insulation",
+        "duration_days": 3,
+        "predecessors": "Ducting - First Fix",
+        "start_date": "2026-05-16",
+        "finish_date": "2026-05-18"
+      },
+      {
+        "wbs": "HVAC",
+        "activity_name": "FCU - Final Installation",
+        "duration_days": 3,
+        "predecessors": "Ducting - Insulation",
+        "start_date": "2026-05-19",
+        "finish_date": "2026-05-21"
+      },
+      {
+        "wbs": "Electrical",
+        "activity_name": "Lighting - Conduit First Fix",
+        "duration_days": 3,
+        "predecessors": "FCU - Final Installation",
+        "start_date": "2026-05-22",
+        "finish_date": "2026-05-24"
+      },
+      {
+        "wbs": "Electrical",
+        "activity_name": "Lighting - Wiring First Fix",
+        "duration_days": 4,
+        "predecessors": "Lighting - Conduit First Fix",
+        "start_date": "2026-05-25",
+        "finish_date": "2026-05-28"
+      },
+      {
+        "wbs": "Electrical",
+        "activity_name": "Power - Socket Installation",
+        "duration_days": 3,
+        "predecessors": "Lighting - Wiring First Fix",
+        "start_date": "2026-05-29",
+        "finish_date": "2026-05-31"
+      },
+      {
+        "wbs": "Electrical",
+        "activity_name": "Fire Alarm - Control Panel Installation",
+        "duration_days": 2,
+        "predecessors": "Power - Socket Installation",
+        "start_date": "2026-06-01",
+        "finish_date": "2026-06-02"
+      },
+      {
+        "wbs": "Miscellaneous",
+        "activity_name": "Waterproofing - Membrane Installation",
+        "duration_days": 2,
+        "predecessors": "Fire Alarm - Control Panel Installation",
+        "start_date": "2026-06-03",
+        "finish_date": "2026-06-04"
+      },
+      {
+        "wbs": "Miscellaneous",
+        "activity_name": "Signage - Installation",
+        "duration_days": 2,
+        "predecessors": "Waterproofing - Membrane Installation",
+        "start_date": "2026-06-05",
+        "finish_date": "2026-06-06"
+      },
+      {
+        "wbs": "Miscellaneous",
+        "activity_name": "Testing - Plumbing Leak Check",
+        "duration_days": 2,
+        "predecessors": "Signage - Installation",
+        "start_date": "2026-06-07",
+        "finish_date": "2026-06-08"
+      },
+      {
+        "wbs": "Miscellaneous",
+        "activity_name": "Branding - Accessories Fixing",
+        "duration_days": 2,
+        "predecessors": "Testing - Plumbing Leak Check",
+        "start_date": "2026-06-09",
+        "finish_date": "2026-06-10"
+      },
+      {
+        "wbs": "Outdoor Areas",
+        "activity_name": "Landlord Approval - Shop Drawings",
+        "duration_days": 2,
+        "predecessors": "Branding - Accessories Fixing",
+        "start_date": "2026-06-11",
+        "finish_date": "2026-06-12"
+      },
+      {
+        "wbs": "Outdoor Areas",
+        "activity_name": "External Paving - Installation",
+        "duration_days": 4,
+        "predecessors": "Landlord Approval - Shop Drawings",
+        "start_date": "2026-06-13",
+        "finish_date": "2026-06-16"
+      },
+      {
+        "wbs": "Outdoor Areas",
+        "activity_name": "Access Coordination - Permit Clearance",
+        "duration_days": 2,
+        "predecessors": "External Paving - Installation",
+        "start_date": "2026-06-17",
+        "finish_date": "2026-06-18"
+      },
+      {
+        "wbs": "Outdoor Areas",
+        "activity_name": "Landlord Signoff - Final Walkthrough",
+        "duration_days": 2,
+        "predecessors": "Access Coordination - Permit Clearance",
+        "start_date": "2026-06-19",
+        "finish_date": "2026-06-20"
+      },
+      {
+        "wbs": "Closeout / Testing & Commissioning",
+        "activity_name": "Testing, Snagging, and Handover",
+        "duration_days": 5,
+        "predecessors": "Landlord Signoff - Final Walkthrough",
+        "start_date": "2026-06-21",
+        "finish_date": "2026-06-25"
+      }
+    ],
+    "events": []
+  },
+  "chat_history": [
+    {
+      "role": "assistant",
+      "content": "I can explain any BOQ agent, run one for you, or log a lost workday and recalculate the full schedule."
+    },
+    {
+      "role": "assistant",
+      "content": "Doors and Partitions agent reviewed the BOQ scope and refreshed 4 scheduler-ready activities."
+    },
+    {
+      "role": "assistant",
+      "content": "BOQ file 'demo_boq.xlsx' uploaded successfully and is ready for schedule extraction."
+    }
+  ],
+  "project_summary": {
+    "total_duration_days": 107,
+    "delay_events": 0,
+    "last_action": "Uploaded BOQ file demo_boq.xlsx"
+  },
+  "boq_upload": {
+    "filename": null,
+    "stored_path": null,
+    "uploaded_at": null,
+    "status": "No BOQ uploaded yet"
+  }
+}
