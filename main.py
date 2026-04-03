@@ -743,6 +743,15 @@ app.add_middleware(
 STATE = load_state()
 
 
+@app.get("/health")
+def health_check() -> dict[str, str]:
+    return {
+        "status": "ok",
+        "service": "boq-agent-console-api",
+        "timestamp": datetime.now().isoformat(timespec="seconds"),
+    }
+
+
 @app.get("/api/dashboard")
 def get_dashboard() -> dict[str, Any]:
     return STATE
