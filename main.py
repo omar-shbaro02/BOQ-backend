@@ -20,10 +20,9 @@ import uvicorn
 import xml.etree.ElementTree as ET
 
 try:
-    from agents import Agent, Runner
+    from openai import OpenAI
 except ImportError:
-    Agent = None
-    Runner = None
+    OpenAI = None
 
 APP_DIR = Path(__file__).resolve().parent
 STATE_FILE = APP_DIR / "project_state.json"
@@ -173,13 +172,13 @@ def schema_for(model: type[BaseModel]) -> dict[str, Any]:
 
 def sdk_runtime_status() -> dict[str, Any]:
     return {
-        "enabled": Agent is not None and Runner is not None and bool(os.getenv("OPENAI_API_KEY")),
-        "package_available": Agent is not None and Runner is not None,
+        "enabled": OpenAI is not None and bool(os.getenv("OPENAI_API_KEY")),
+        "package_available": OpenAI is not None,
         "model": OPENAI_AGENT_MODEL,
         "missing": [
             item
             for item, missing in {
-                "openai-agents package": Agent is None or Runner is None,
+                "openai package": OpenAI is None,
                 "OPENAI_API_KEY": not bool(os.getenv("OPENAI_API_KEY")),
             }.items()
             if missing
@@ -192,7 +191,7 @@ def attach_agent_contracts(state: dict[str, Any]) -> None:
     for agent in state.get("agents", []):
         agent["sdk"] = {
             "provider": "openai",
-            "framework": "openai-agents-python",
+            "framework": "openai-python",
             "model": OPENAI_AGENT_MODEL,
             "output_schema": "SpecialistAgentOutput",
             "runtime": runtime,
@@ -203,12 +202,228 @@ def attach_agent_contracts(state: dict[str, Any]) -> None:
     if isinstance(planner, dict):
         planner["sdk"] = {
             "provider": "openai",
-            "framework": "openai-agents-python",
+            "framework": "openai-python",
             "model": OPENAI_AGENT_MODEL,
             "output_schema": "ProjectManagerAgentOutput",
             "runtime": runtime,
         }
         planner["json_schema_endpoint"] = "/api/agents/schemas"
+
+
+def get_openai_client() -> Any:
+    if OpenAI is None:
+        raise RuntimeError("openai package is not installed.")
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is not set.")
+    return OpenAI(api_key=api_key)
+
+
+def extract_json_object(text: str) -> dict[str, Any]:
+    candidate = text.strip()
+    try:
+        payload = json.loads(candidate)
+        if isinstance(payload, dict):
+            return payload
+    except json.JSONDecodeError:
+        pass
+
+    start = candidate.find("{")
+    end = candidate.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        raise ValueError("OpenAI response did not contain a valid JSON object.")
+    payload = json.loads(candidate[start : end + 1])
+    if not isinstance(payload, dict):
+        raise ValueError("OpenAI response JSON was not an object.")
+    return payload
+
+
+def normalize_specialist_activities(value: Any, agent: dict[str, Any]) -> list[dict[str, str]]:
+    payload = value
+    if isinstance(payload, BaseModel):
+        payload = pydantic_to_dict(payload, by_alias=True)
+
+    if isinstance(payload, dict):
+        if "activities" in payload:
+            payload = payload["activities"]
+        else:
+            payload = [payload]
+
+    if not isinstance(payload, list):
+        return []
+
+    normalized: list[dict[str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for item in payload:
+        if isinstance(item, BaseModel):
+            item = pydantic_to_dict(item, by_alias=True)
+        if not isinstance(item, dict):
+            continue
+        wbs = normalize_text(item.get("WBS") or item.get("wbs") or agent["wbs_category"])
+        activity_name = normalize_text(item.get("Activity Name") or item.get("activity_name"))
+        if not activity_name:
+            continue
+        if wbs.lower() != agent["wbs_category"].lower():
+            wbs = agent["wbs_category"]
+        key = (wbs, activity_name)
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append({"WBS": wbs, "Activity Name": activity_name[:120]})
+    return normalized
+
+
+def normalize_project_manager_schedule(value: Any, fallback_schedule: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    payload = value
+    if isinstance(payload, BaseModel):
+        payload = pydantic_to_dict(payload)
+
+    if isinstance(payload, dict):
+        payload = payload.get("schedule", [])
+
+    if not isinstance(payload, list):
+        return []
+
+    fallback_lookup = {item["activity_name"]: item for item in fallback_schedule}
+    normalized: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in payload:
+        if isinstance(item, BaseModel):
+            item = pydantic_to_dict(item)
+        if not isinstance(item, dict):
+            continue
+        activity_name = normalize_text(item.get("Activity Name") or item.get("activity_name"))
+        if not activity_name or activity_name in seen:
+            continue
+        seen.add(activity_name)
+        fallback_item = fallback_lookup.get(activity_name)
+        wbs = normalize_text(item.get("WBS") or item.get("wbs") or (fallback_item["wbs"] if fallback_item else ""))
+        predecessors = normalize_text(item.get("Predecessor(s)") or item.get("predecessors") or (fallback_item["predecessors"] if fallback_item else "Project Start"))
+        start_date = normalize_text(item.get("start_date") or (fallback_item["start_date"] if fallback_item else ""))
+        finish_date = normalize_text(item.get("finish_date") or (fallback_item["finish_date"] if fallback_item else ""))
+        try:
+            duration_days = int(item.get("Duration (Days)") or item.get("duration_days") or (fallback_item["duration_days"] if fallback_item else 1))
+        except (TypeError, ValueError):
+            duration_days = fallback_item["duration_days"] if fallback_item else 1
+        if not start_date or not finish_date:
+            continue
+        try:
+            datetime.strptime(start_date, "%Y-%m-%d")
+            datetime.strptime(finish_date, "%Y-%m-%d")
+        except ValueError:
+            continue
+        normalized.append(
+            {
+                "wbs": wbs,
+                "activity_name": activity_name,
+                "duration_days": max(1, duration_days),
+                "predecessors": predecessors or "Project Start",
+                "resource_list": fallback_item["resource_list"] if fallback_item else "",
+                "start_date": start_date,
+                "finish_date": finish_date,
+                "package_sequence": fallback_item["package_sequence"] if fallback_item else 999,
+            }
+        )
+    normalized.sort(key=lambda row: (row["start_date"], row["package_sequence"], row["activity_name"]))
+    return normalized
+
+
+def build_specialist_sdk_agent(agent_config: dict[str, Any]) -> Any:
+    return (
+        f"You are {agent_config['agent_name']} for the {agent_config['wbs_category']} WBS category. "
+        "Return only valid JSON matching this shape: "
+        '{"activities":[{"WBS":"string","Activity Name":"string"}]}. '
+        "Ignore zero-quantity items, duplicates, vague notes, and non-work rows. "
+        f"Every returned row must use WBS exactly equal to '{agent_config['wbs_category']}'. "
+        "Do not include markdown, code fences, or commentary."
+    )
+
+
+def build_project_manager_sdk_agent() -> Any:
+    return (
+        "You are the Project Manager Agent. Combine specialist JSON outputs into a Primavera-ready schedule. "
+        "Return only valid JSON matching this shape: "
+        '{"schedule":[{"wbs":"string","activity_name":"string","duration_days":1,"predecessors":"string","start_date":"YYYY-MM-DD","finish_date":"YYYY-MM-DD"}],"primavera_import_notes":["string"]}. '
+        "Use short planner-safe activity names, ISO dates, numeric duration_days, and natural-language predecessors. "
+        "Do not include markdown, headings, prose, or code fences."
+    )
+
+
+def run_specialist_sdk(agent_config: dict[str, Any], boq_rows: list[dict[str, Any]]) -> list[dict[str, str]] | None:
+    if not sdk_runtime_status()["enabled"]:
+        return None
+    client = get_openai_client()
+    boq_excerpt = boq_rows[:60]
+    prompt = json.dumps(
+        {
+            "agent_name": agent_config["agent_name"],
+            "wbs_category": agent_config["wbs_category"],
+            "task": agent_config["task"],
+            "output_rules": [
+                "Return only JSON.",
+                "Use only columns WBS and Activity Name.",
+                "Use WBS exactly matching the assigned category.",
+                "Ignore zero-quantity, duplicate, note-only, or vague items.",
+            ],
+            "boq_rows": boq_excerpt,
+        },
+        indent=2,
+    )
+    response = client.chat.completions.create(
+        model=OPENAI_AGENT_MODEL,
+        temperature=0.1,
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": build_specialist_sdk_agent(agent_config)},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    content = response.choices[0].message.content or "{}"
+    final_output = validate_model(SpecialistAgentOutput, extract_json_object(content))
+    normalized = normalize_specialist_activities(final_output, agent_config)
+    return normalized or None
+
+
+def run_project_manager_sdk(state: dict[str, Any], fallback_schedule: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
+    if not sdk_runtime_status()["enabled"]:
+        return None
+    client = get_openai_client()
+    prompt = json.dumps(
+        {
+            "project_start_date": fallback_schedule[0]["start_date"],
+            "required_columns": ["wbs", "activity_name", "duration_days", "predecessors", "start_date", "finish_date"],
+            "specialist_outputs": [
+                {
+                    "agent_name": agent["agent_name"],
+                    "wbs_category": agent["wbs_category"],
+                    "sequence": agent["sequence"],
+                    "activities": agent["latest_output"],
+                }
+                for agent in sorted(state["agents"], key=lambda item: item["sequence"])
+            ],
+            "reference_schedule": fallback_schedule,
+            "rules": [
+                "Return only JSON.",
+                "Keep ISO dates valid.",
+                "Keep all activities buildable and schedulable.",
+                "Preserve natural predecessor logic.",
+            ],
+        },
+        indent=2,
+    )
+    response = client.chat.completions.create(
+        model=OPENAI_AGENT_MODEL,
+        temperature=0.1,
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": build_project_manager_sdk_agent()},
+            {"role": "user", "content": prompt},
+        ],
+    )
+    content = response.choices[0].message.content or "{}"
+    final_output = validate_model(ProjectManagerAgentOutput, extract_json_object(content))
+    normalized = normalize_project_manager_schedule(final_output, fallback_schedule)
+    return normalized or None
 
 
 def append_chat(state: dict[str, Any], role: str, content: str) -> None:
@@ -485,9 +700,22 @@ def recalculate_timeline(state: dict[str, Any], action: str) -> None:
 async def run_specialist_agent(agent: dict[str, Any], boq_rows: list[dict[str, Any]]) -> None:
     agent['status'] = 'running'
     await asyncio.sleep(0)
-    latest_output, matches = build_agent_output(agent, boq_rows)
-    agent['latest_output'] = latest_output
+    local_output, matches = build_agent_output(agent, boq_rows)
+    openai_required = sdk_runtime_status()["enabled"]
+    try:
+        sdk_output = await asyncio.to_thread(run_specialist_sdk, agent, boq_rows)
+    except Exception as exc:
+        agent["last_sdk_error"] = str(exc)
+        agent["status"] = "failed"
+        if openai_required:
+            raise
+        sdk_output = None
+    if openai_required and not sdk_output:
+        agent["status"] = "failed"
+        raise RuntimeError(f"OpenAI did not return valid output for {agent['agent_name']}.")
+    agent['latest_output'] = sdk_output or local_output
     agent['boq_matches'] = matches
+    agent['last_run_source'] = 'openai_chat_model' if sdk_output else 'local_fallback'
     agent['last_run'] = datetime.now().isoformat(timespec='seconds')
     agent['status'] = 'completed'
 
@@ -508,14 +736,39 @@ async def run_full_workflow_logic(state: dict[str, Any]) -> str:
     for agent in state['agents']:
         agent['status'] = 'queued'
     await asyncio.gather(*(run_specialist_agent(agent, boq_rows) for agent in state['agents']))
+    fallback_schedule = build_schedule(state["agents"], state["timeline"]["events"])
+    openai_required = sdk_runtime_status()["enabled"]
+    try:
+        sdk_schedule = await asyncio.to_thread(run_project_manager_sdk, state, fallback_schedule)
+    except Exception as exc:
+        state["planner"]["last_sdk_error"] = str(exc)
+        state["planner"]["status"] = "failed"
+        if openai_required:
+            raise HTTPException(status_code=502, detail=f"Project manager OpenAI run failed: {exc}")
+        sdk_schedule = None
+    if openai_required and not sdk_schedule:
+        state["planner"]["status"] = "failed"
+        raise HTTPException(status_code=502, detail="Project manager did not return valid OpenAI schedule output.")
     state['boq_upload']['row_count'] = len(boq_rows)
     state['boq_upload']['detected_sheet'] = detected_sheet
     state['boq_upload']['status'] = 'BOQ parsed. All specialist agents completed, and the project manager prepared the Primavera import workbook.'
     state['planner']['status'] = 'exported'
+    state["planner"]["last_run_source"] = 'openai_chat_model' if sdk_schedule else 'local_fallback'
     state['planner']['last_run'] = datetime.now().isoformat(timespec='seconds')
     state['workflow']['status'] = 'completed'
     state['workflow']['last_run'] = datetime.now().isoformat(timespec='seconds')
-    recalculate_timeline(state, 'Ran full BOQ workflow with parallel specialist agents')
+    if sdk_schedule:
+        state["timeline"]["schedule"] = sdk_schedule
+        state["timeline"]["start_date"] = min(item["start_date"] for item in sdk_schedule)
+        state["timeline"]["finish_date"] = max(item["finish_date"] for item in sdk_schedule)
+        state["project_summary"] = {
+            "total_duration_days": sum(item["duration_days"] for item in sdk_schedule),
+            "delay_events": len(state["timeline"]["events"]),
+            "last_action": "Ran full BOQ workflow with parallel specialist agents",
+            "primavera_rows": len(sdk_schedule),
+        }
+    else:
+        recalculate_timeline(state, 'Ran full BOQ workflow with parallel specialist agents')
     refresh_primavera_export(state)
     total_activities = sum(len(agent['latest_output']) for agent in state['agents'])
     return f"Ran {len(state['agents'])} specialist agents in parallel from the uploaded BOQ, generated {total_activities} package activities, and refreshed {state['planner']['export_file']} for Primavera import."
@@ -524,15 +777,49 @@ def run_agent_logic(state: dict[str, Any], agent_id: str) -> str:
     for agent in state['agents']:
         if agent['id'] == agent_id:
             latest_output, matches = build_agent_output(agent, [])
-            agent['latest_output'] = latest_output
+            openai_required = sdk_runtime_status()["enabled"]
+            try:
+                sdk_output = run_specialist_sdk(agent, [])
+            except Exception as exc:
+                agent["last_sdk_error"] = str(exc)
+                if openai_required:
+                    raise
+                sdk_output = None
+            if openai_required and not sdk_output:
+                raise RuntimeError(f"OpenAI did not return valid output for {agent['agent_name']}.")
+            agent['latest_output'] = sdk_output or latest_output
             agent['boq_matches'] = matches
+            agent["last_run_source"] = 'openai_chat_model' if sdk_output else 'local_fallback'
             agent['last_run'] = datetime.now().isoformat(timespec='seconds')
             agent['status'] = 'completed'
             recalculate_timeline(state, f"Ran {agent['wbs_category']} agent")
             return f"{agent['wbs_category']} agent refreshed {len(agent['latest_output'])} activities."
     if agent_id == PLANNER_AGENT['id']:
-        recalculate_timeline(state, 'Project Manager Agent rebuilt the Primavera export')
+        fallback_schedule = build_schedule(state["agents"], state["timeline"]["events"])
+        openai_required = sdk_runtime_status()["enabled"]
+        try:
+            sdk_schedule = run_project_manager_sdk(state, fallback_schedule)
+        except Exception as exc:
+            state["planner"]["last_sdk_error"] = str(exc)
+            if openai_required:
+                raise
+            sdk_schedule = None
+        if openai_required and not sdk_schedule:
+            raise RuntimeError("OpenAI did not return valid project manager schedule output.")
+        if sdk_schedule:
+            state["timeline"]["schedule"] = sdk_schedule
+            state["timeline"]["start_date"] = min(item["start_date"] for item in sdk_schedule)
+            state["timeline"]["finish_date"] = max(item["finish_date"] for item in sdk_schedule)
+            state["project_summary"] = {
+                "total_duration_days": sum(item["duration_days"] for item in sdk_schedule),
+                "delay_events": len(state["timeline"]["events"]),
+                "last_action": "Project Manager Agent rebuilt the Primavera export",
+                "primavera_rows": len(sdk_schedule),
+            }
+        else:
+            recalculate_timeline(state, 'Project Manager Agent rebuilt the Primavera export')
         state['planner']['status'] = 'exported'
+        state["planner"]["last_run_source"] = 'openai_chat_model' if sdk_schedule else 'local_fallback'
         state['planner']['last_run'] = datetime.now().isoformat(timespec='seconds')
         refresh_primavera_export(state)
         return f"{state['planner']['name']} rebuilt the Primavera workbook."

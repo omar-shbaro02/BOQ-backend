@@ -59,16 +59,14 @@
       "last_run": null,
       "sdk": {
         "provider": "openai",
-        "framework": "openai-agents-python",
+        "framework": "openai-python",
         "model": "gpt-4.1-mini",
         "output_schema": "SpecialistAgentOutput",
         "runtime": {
-          "enabled": false,
-          "package_available": false,
+          "enabled": true,
+          "package_available": true,
           "model": "gpt-4.1-mini",
-          "missing": [
-            "openai-agents package"
-          ]
+          "missing": []
         }
       },
       "json_schema_endpoint": "/api/agents/schemas"
@@ -133,16 +131,14 @@
       "last_run": null,
       "sdk": {
         "provider": "openai",
-        "framework": "openai-agents-python",
+        "framework": "openai-python",
         "model": "gpt-4.1-mini",
         "output_schema": "SpecialistAgentOutput",
         "runtime": {
-          "enabled": false,
-          "package_available": false,
+          "enabled": true,
+          "package_available": true,
           "model": "gpt-4.1-mini",
-          "missing": [
-            "openai-agents package"
-          ]
+          "missing": []
         }
       },
       "json_schema_endpoint": "/api/agents/schemas"
@@ -202,16 +198,14 @@
       "last_run": null,
       "sdk": {
         "provider": "openai",
-        "framework": "openai-agents-python",
+        "framework": "openai-python",
         "model": "gpt-4.1-mini",
         "output_schema": "SpecialistAgentOutput",
         "runtime": {
-          "enabled": false,
-          "package_available": false,
+          "enabled": true,
+          "package_available": true,
           "model": "gpt-4.1-mini",
-          "missing": [
-            "openai-agents package"
-          ]
+          "missing": []
         }
       },
       "json_schema_endpoint": "/api/agents/schemas"
@@ -276,16 +270,14 @@
       "last_run": null,
       "sdk": {
         "provider": "openai",
-        "framework": "openai-agents-python",
+        "framework": "openai-python",
         "model": "gpt-4.1-mini",
         "output_schema": "SpecialistAgentOutput",
         "runtime": {
-          "enabled": false,
-          "package_available": false,
+          "enabled": true,
+          "package_available": true,
           "model": "gpt-4.1-mini",
-          "missing": [
-            "openai-agents package"
-          ]
+          "missing": []
         }
       },
       "json_schema_endpoint": "/api/agents/schemas"
@@ -349,16 +341,14 @@
       "last_run": null,
       "sdk": {
         "provider": "openai",
-        "framework": "openai-agents-python",
+        "framework": "openai-python",
         "model": "gpt-4.1-mini",
         "output_schema": "SpecialistAgentOutput",
         "runtime": {
-          "enabled": false,
-          "package_available": false,
+          "enabled": true,
+          "package_available": true,
           "model": "gpt-4.1-mini",
-          "missing": [
-            "openai-agents package"
-          ]
+          "missing": []
         }
       },
       "json_schema_endpoint": "/api/agents/schemas"
@@ -423,16 +413,14 @@
       "last_run": null,
       "sdk": {
         "provider": "openai",
-        "framework": "openai-agents-python",
+        "framework": "openai-python",
         "model": "gpt-4.1-mini",
         "output_schema": "SpecialistAgentOutput",
         "runtime": {
-          "enabled": false,
-          "package_available": false,
+          "enabled": true,
+          "package_available": true,
           "model": "gpt-4.1-mini",
-          "missing": [
-            "openai-agents package"
-          ]
+          "missing": []
         }
       },
       "json_schema_endpoint": "/api/agents/schemas"
@@ -498,16 +486,14 @@
       "last_run": null,
       "sdk": {
         "provider": "openai",
-        "framework": "openai-agents-python",
+        "framework": "openai-python",
         "model": "gpt-4.1-mini",
         "output_schema": "SpecialistAgentOutput",
         "runtime": {
-          "enabled": false,
-          "package_available": false,
+          "enabled": true,
+          "package_available": true,
           "model": "gpt-4.1-mini",
-          "missing": [
-            "openai-agents package"
-          ]
+          "missing": []
         }
       },
       "json_schema_endpoint": "/api/agents/schemas"
@@ -571,16 +557,14 @@
       "last_run": null,
       "sdk": {
         "provider": "openai",
-        "framework": "openai-agents-python",
+        "framework": "openai-python",
         "model": "gpt-4.1-mini",
         "output_schema": "SpecialistAgentOutput",
         "runtime": {
-          "enabled": false,
-          "package_available": false,
+          "enabled": true,
+          "package_available": true,
           "model": "gpt-4.1-mini",
-          "missing": [
-            "openai-agents package"
-          ]
+          "missing": []
         }
       },
       "json_schema_endpoint": "/api/agents/schemas"
@@ -645,16 +629,14 @@
       "last_run": null,
       "sdk": {
         "provider": "openai",
-        "framework": "openai-agents-python",
+        "framework": "openai-python",
         "model": "gpt-4.1-mini",
         "output_schema": "SpecialistAgentOutput",
         "runtime": {
-          "enabled": false,
-          "package_available": false,
+          "enabled": true,
+          "package_available": true,
           "model": "gpt-4.1-mini",
-          "missing": [
-            "openai-agents package"
-          ]
+          "missing": []
         }
       },
       "json_schema_endpoint": "/api/agents/schemas"
@@ -675,19 +657,17 @@
     "status": "ready",
     "last_run": null,
     "export_file": "primavera_schedule_import.xlsx",
-    "export_updated_at": "2026-04-11T15:26:11",
+    "export_updated_at": "2026-04-11T17:44:10",
     "sdk": {
       "provider": "openai",
-      "framework": "openai-agents-python",
+      "framework": "openai-python",
       "model": "gpt-4.1-mini",
       "output_schema": "ProjectManagerAgentOutput",
       "runtime": {
-        "enabled": false,
-        "package_available": false,
+        "enabled": true,
+        "package_available": true,
         "model": "gpt-4.1-mini",
-        "missing": [
-          "openai-agents package"
-        ]
+        "missing": []
       }
     },
     "json_schema_endpoint": "/api/agents/schemas"
