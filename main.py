@@ -893,8 +893,25 @@ def get_dashboard() -> dict[str, Any]:
 
 @app.get("/api/agents/schemas")
 def get_agent_schemas() -> dict[str, Any]:
+    runtime = sdk_runtime_status()
     return {
-        "runtime": sdk_runtime_status(),
+        "provider": "openai",
+        "openai_agents": runtime["enabled"],
+        "runtime": runtime,
+        "schemas": [
+            {
+                "name": "specialist_agent_output",
+                "provider": "openai",
+                "model": OPENAI_AGENT_MODEL,
+                "schema": schema_for(SpecialistAgentOutput),
+            },
+            {
+                "name": "project_manager_agent_output",
+                "provider": "openai",
+                "model": OPENAI_AGENT_MODEL,
+                "schema": schema_for(ProjectManagerAgentOutput),
+            },
+        ],
         "specialist_agent_output": schema_for(SpecialistAgentOutput),
         "project_manager_agent_output": schema_for(ProjectManagerAgentOutput),
         "primavera_xlsx_sheets": build_primavera_rows(STATE["timeline"]["schedule"]),
