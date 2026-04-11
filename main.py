@@ -4,6 +4,7 @@ import asyncio
 import json
 import os
 import re
+import zlib
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 from io import BytesIO
@@ -236,6 +237,68 @@ def extract_json_object(text: str) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError("OpenAI response JSON was not an object.")
     return payload
+
+
+def extract_pdf_boq_rows_via_openai(path: Path) -> tuple[list[dict[str, Any]], str | None]:
+    if not sdk_runtime_status()["enabled"]:
+        raise RuntimeError("OpenAI PDF extraction requires an active OpenAI runtime.")
+
+    client = get_openai_client()
+    with path.open("rb") as handle:
+        uploaded = client.files.create(file=handle, purpose="user_data")
+
+    prompt = (
+        "Read this BOQ PDF and extract its measurable BOQ rows. "
+        'Return only valid JSON shaped exactly like {"rows":[{"description":"string","quantity":1.0}]}. '
+        "Keep each description concise but complete. "
+        "Use null for quantity when it is not visible. "
+        "Ignore page headers, footers, signatures, totals, and narrative paragraphs."
+    )
+
+    try:
+        response = client.responses.create(
+            model=OPENAI_AGENT_MODEL,
+            input=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "input_file", "file_id": uploaded.id},
+                        {"type": "input_text", "text": prompt},
+                    ],
+                }
+            ],
+        )
+        payload = extract_json_object(response.output_text or "{}")
+        rows = payload.get("rows", [])
+        if not isinstance(rows, list):
+            raise ValueError("OpenAI PDF extraction did not return a rows array.")
+        parsed_rows: list[dict[str, Any]] = []
+        for item in rows:
+            if not isinstance(item, dict):
+                continue
+            description = normalize_text(item.get("description"))
+            quantity = item.get("quantity")
+            if not description:
+                continue
+            try:
+                quantity_value = float(quantity) if quantity is not None else None
+            except (TypeError, ValueError):
+                quantity_value = None
+            parsed_rows.append(
+                {
+                    "cells": [description, quantity_value] if quantity_value is not None else [description],
+                    "description": description,
+                    "quantity": quantity_value,
+                }
+            )
+        if not parsed_rows:
+            raise ValueError("OpenAI PDF extraction returned no usable BOQ rows.")
+        return parsed_rows, "PDF Upload"
+    finally:
+        try:
+            client.files.delete(uploaded.id)
+        except Exception:
+            pass
 
 
 def normalize_specialist_activities(value: Any, agent: dict[str, Any]) -> list[dict[str, str]]:
@@ -492,6 +555,99 @@ def is_meaningful_quantity(value: float | None) -> bool:
     return value is not None and 0 < value < 100000
 
 
+def decode_pdf_literal(text: str) -> str:
+    out: list[str] = []
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if char != "\\":
+            out.append(char)
+            index += 1
+            continue
+        index += 1
+        if index >= len(text):
+            break
+        escaped = text[index]
+        mapping = {
+            "n": "\n",
+            "r": "\r",
+            "t": "\t",
+            "b": "\b",
+            "f": "\f",
+            "\\": "\\",
+            "(": "(",
+            ")": ")",
+        }
+        out.append(mapping.get(escaped, escaped))
+        index += 1
+    result = "".join(out)
+    if result.count("\x00") >= max(2, len(result) // 6):
+        try:
+            result = result.encode("latin-1", errors="ignore").decode("utf-16-be", errors="ignore")
+        except Exception:
+            result = result.replace("\x00", "")
+    return normalize_text(result)
+
+
+def extract_pdf_text(file_bytes: bytes) -> str:
+    stream_pattern = re.compile(rb"<<(?P<header>.*?)>>\s*stream\r?\n(?P<body>.*?)\r?\nendstream", re.S)
+    text_blocks: list[str] = []
+
+    for match in stream_pattern.finditer(file_bytes):
+        header = match.group("header")
+        body = match.group("body")
+        if b"/FlateDecode" in header:
+            try:
+                body = zlib.decompress(body)
+            except zlib.error:
+                continue
+        try:
+            decoded = body.decode("latin-1", errors="ignore")
+        except Exception:
+            continue
+        for bt_block in re.findall(r"BT(.*?)ET", decoded, flags=re.S):
+            strings = [decode_pdf_literal(item) for item in re.findall(r"\((?:\\.|[^\\()])*\)", bt_block)]
+            strings = [item.strip("() ") for item in strings if normalize_text(item.strip("() "))]
+            if strings:
+                text_blocks.append("\n".join(strings))
+
+    text = normalize_text("\n".join(text_blocks).replace("\r", "\n"))
+    if text:
+        return text
+
+    fallback_strings = [
+        normalize_text(decode_pdf_literal(item)[1:-1])
+        for item in re.findall(rb"\((?:\\.|[^\\()])*\)", file_bytes)
+        if normalize_text(item.decode("latin-1", errors="ignore"))
+    ]
+    return "\n".join(fallback_strings)
+
+
+def load_pdf_rows(path: Path) -> tuple[list[dict[str, Any]], str | None]:
+    text = extract_pdf_text(path.read_bytes())
+    if not text:
+        raise ValueError("Could not extract readable text from the PDF BOQ.")
+
+    parsed_rows: list[dict[str, Any]] = []
+    for raw_line in text.splitlines():
+        line = normalize_text(raw_line)
+        if len(line) < 4:
+            continue
+        quantity_matches = re.findall(r"(?<!\w)(\d+(?:[.,]\d+)?)(?!\w)", line)
+        quantity = next((parse_float(value) for value in reversed(quantity_matches) if is_meaningful_quantity(parse_float(value))), None)
+        parsed_rows.append(
+            {
+                "cells": [segment for segment in re.split(r"\s{2,}|\t", line) if segment],
+                "description": line,
+                "quantity": quantity,
+            }
+        )
+
+    if not parsed_rows:
+        raise ValueError("The PDF BOQ did not produce any usable rows.")
+    return parsed_rows, "PDF Upload"
+
+
 def load_workbook_rows(path: Path) -> tuple[list[dict[str, Any]], str | None]:
     with ZipFile(path) as workbook:
         workbook_xml = ET.fromstring(workbook.read('xl/workbook.xml'))
@@ -541,6 +697,17 @@ def load_workbook_rows(path: Path) -> tuple[list[dict[str, Any]], str | None]:
             if parsed_rows:
                 break
         return parsed_rows, detected_sheet
+
+
+def load_boq_rows(path: Path) -> tuple[list[dict[str, Any]], str | None]:
+    extension = path.suffix.lower()
+    if extension == ".pdf":
+        if sdk_runtime_status()["enabled"]:
+            return extract_pdf_boq_rows_via_openai(path)
+        return load_pdf_rows(path)
+    if extension in {".xlsx", ".xls"}:
+        return load_workbook_rows(path)
+    raise ValueError(f"Unsupported BOQ format: {extension}")
 
 
 def choose_agent_for_row(description: str) -> dict[str, Any] | None:
@@ -728,9 +895,9 @@ async def run_full_workflow_logic(state: dict[str, Any]) -> str:
     if not path.exists():
         raise HTTPException(status_code=404, detail='The uploaded BOQ file could not be found on disk.')
     try:
-        boq_rows, detected_sheet = load_workbook_rows(path)
+        boq_rows, detected_sheet = load_boq_rows(path)
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f'Failed to parse the uploaded BOQ workbook: {exc}') from exc
+        raise HTTPException(status_code=400, detail=f'Failed to parse the uploaded BOQ file: {exc}') from exc
     state['workflow']['status'] = 'running'
     state['planner']['status'] = 'waiting'
     for agent in state['agents']:
@@ -946,8 +1113,8 @@ async def run_all_agents() -> dict[str, Any]:
 async def upload_boq(request: Request) -> dict[str, Any]:
     filename = request.headers.get('x-filename', 'uploaded_boq.xlsx')
     extension = Path(filename).suffix.lower()
-    if extension not in {'.xlsx', '.xls'}:
-        raise HTTPException(status_code=400, detail='Only Excel BOQ files (.xlsx or .xls) are supported.')
+    if extension not in {'.xlsx', '.xls', '.pdf'}:
+        raise HTTPException(status_code=400, detail='Supported BOQ formats are .xlsx, .xls, and .pdf.')
     file_bytes = await request.body()
     if not file_bytes:
         raise HTTPException(status_code=400, detail='Uploaded BOQ file is empty.')
