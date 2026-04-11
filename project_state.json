@@ -5,50 +5,7 @@
       "agent_name": "WBS_Extractor_01",
       "wbs_category": "Doors and Partitions",
       "sequence": 1,
-      "status": "active",
       "task": "Extract BOQ scope for doors, glazing, drywall partitions, and metal partitions into scheduler-ready activities.",
-      "language_guidelines": {
-        "clarity": "Use concise, descriptive construction terminology.",
-        "granularity": "Decompose tasks into sequential, detailed subtasks.",
-        "formatting": "Skip zero quantity work and vague wording."
-      },
-      "template_output": [
-        {
-          "WBS": "Doors and Partitions",
-          "Activity Name": "Partitions - Marking"
-        },
-        {
-          "WBS": "Doors and Partitions",
-          "Activity Name": "Partitions - Framing"
-        },
-        {
-          "WBS": "Doors and Partitions",
-          "Activity Name": "Doors - Frame Installation"
-        },
-        {
-          "WBS": "Doors and Partitions",
-          "Activity Name": "Doors - Shutter Hanging"
-        }
-      ],
-      "latest_output": [
-        {
-          "WBS": "Doors and Partitions",
-          "Activity Name": "Partitions - Marking"
-        },
-        {
-          "WBS": "Doors and Partitions",
-          "Activity Name": "Partitions - Framing"
-        },
-        {
-          "WBS": "Doors and Partitions",
-          "Activity Name": "Doors - Frame Installation"
-        },
-        {
-          "WBS": "Doors and Partitions",
-          "Activity Name": "Doors - Shutter Hanging"
-        }
-      ],
-      "last_run": "2026-03-11T12:40:39",
       "keywords": [
         "door",
         "doors",
@@ -61,57 +18,67 @@
         "shutter"
       ],
       "resource_list": "Doors Crew",
-      "boq_matches": 0
+      "template_output": [
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Partitions - Marking"
+        },
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Partitions - Framing"
+        },
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Doors - Frame Installation"
+        },
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Doors - Shutter Hanging"
+        }
+      ],
+      "status": "ready",
+      "boq_matches": 0,
+      "latest_output": [
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Partitions - Marking"
+        },
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Partitions - Framing"
+        },
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Doors - Frame Installation"
+        },
+        {
+          "WBS": "Doors and Partitions",
+          "Activity Name": "Doors - Shutter Hanging"
+        }
+      ],
+      "last_run": null,
+      "sdk": {
+        "provider": "openai",
+        "framework": "openai-agents-python",
+        "model": "gpt-4.1-mini",
+        "output_schema": "SpecialistAgentOutput",
+        "runtime": {
+          "enabled": false,
+          "package_available": false,
+          "model": "gpt-4.1-mini",
+          "missing": [
+            "openai-agents package"
+          ]
+        }
+      },
+      "json_schema_endpoint": "/api/agents/schemas"
     },
     {
       "id": "agent-2",
       "agent_name": "WBS_Extractor_02",
       "wbs_category": "Wood Works",
       "sequence": 2,
-      "status": "active",
       "task": "Extract joinery, cabinetry, counters, cladding, and carpentry items into fabrication and installation steps.",
-      "language_guidelines": {
-        "clarity": "Use full descriptive task names.",
-        "granularity": "Subdivide fabrication, finishing, and installation steps.",
-        "formatting": "Only include measurable, real tasks with quantity."
-      },
-      "template_output": [
-        {
-          "WBS": "Wood Works",
-          "Activity Name": "Joinery - Site Measurements"
-        },
-        {
-          "WBS": "Wood Works",
-          "Activity Name": "Joinery - Fabrication"
-        },
-        {
-          "WBS": "Wood Works",
-          "Activity Name": "Joinery - Finishing"
-        },
-        {
-          "WBS": "Wood Works",
-          "Activity Name": "Joinery - Installation"
-        }
-      ],
-      "latest_output": [
-        {
-          "WBS": "Wood Works",
-          "Activity Name": "Joinery - Site Measurements"
-        },
-        {
-          "WBS": "Wood Works",
-          "Activity Name": "Joinery - Fabrication"
-        },
-        {
-          "WBS": "Wood Works",
-          "Activity Name": "Joinery - Finishing"
-        },
-        {
-          "WBS": "Wood Works",
-          "Activity Name": "Joinery - Installation"
-        }
-      ],
-      "last_run": null,
       "keywords": [
         "wood",
         "joinery",
@@ -125,57 +92,67 @@
         "veneer"
       ],
       "resource_list": "Joinery Crew",
-      "boq_matches": 0
+      "template_output": [
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Site Measurements"
+        },
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Fabrication"
+        },
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Finishing"
+        },
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Installation"
+        }
+      ],
+      "status": "ready",
+      "boq_matches": 0,
+      "latest_output": [
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Site Measurements"
+        },
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Fabrication"
+        },
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Finishing"
+        },
+        {
+          "WBS": "Wood Works",
+          "Activity Name": "Joinery - Installation"
+        }
+      ],
+      "last_run": null,
+      "sdk": {
+        "provider": "openai",
+        "framework": "openai-agents-python",
+        "model": "gpt-4.1-mini",
+        "output_schema": "SpecialistAgentOutput",
+        "runtime": {
+          "enabled": false,
+          "package_available": false,
+          "model": "gpt-4.1-mini",
+          "missing": [
+            "openai-agents package"
+          ]
+        }
+      },
+      "json_schema_endpoint": "/api/agents/schemas"
     },
     {
       "id": "agent-3",
       "agent_name": "WBS_Extractor_03",
       "wbs_category": "Ceiling",
       "sequence": 3,
-      "status": "active",
       "task": "Extract suspended ceilings, gypsum ceilings, acoustic systems, and ceiling paint into staged activities.",
-      "language_guidelines": {
-        "clarity": "Include action and material in activity names.",
-        "granularity": "Split multi-step work into sequential subtasks.",
-        "formatting": "Skip non-applicable entries."
-      },
-      "template_output": [
-        {
-          "WBS": "Ceiling",
-          "Activity Name": "Ceiling - Framing"
-        },
-        {
-          "WBS": "Ceiling",
-          "Activity Name": "Ceiling - Board Fixing"
-        },
-        {
-          "WBS": "Ceiling",
-          "Activity Name": "Ceiling - Putty"
-        },
-        {
-          "WBS": "Ceiling",
-          "Activity Name": "Ceiling - Paint Final Coat"
-        }
-      ],
-      "latest_output": [
-        {
-          "WBS": "Ceiling",
-          "Activity Name": "Ceiling - Framing"
-        },
-        {
-          "WBS": "Ceiling",
-          "Activity Name": "Ceiling - Board Fixing"
-        },
-        {
-          "WBS": "Ceiling",
-          "Activity Name": "Ceiling - Putty"
-        },
-        {
-          "WBS": "Ceiling",
-          "Activity Name": "Ceiling - Paint Final Coat"
-        }
-      ],
-      "last_run": null,
       "keywords": [
         "ceiling",
         "suspended",
@@ -184,57 +161,67 @@
         "soffit"
       ],
       "resource_list": "Ceiling Crew",
-      "boq_matches": 0
+      "template_output": [
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Framing"
+        },
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Board Fixing"
+        },
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Putty"
+        },
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Paint Final Coat"
+        }
+      ],
+      "status": "ready",
+      "boq_matches": 0,
+      "latest_output": [
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Framing"
+        },
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Board Fixing"
+        },
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Putty"
+        },
+        {
+          "WBS": "Ceiling",
+          "Activity Name": "Ceiling - Paint Final Coat"
+        }
+      ],
+      "last_run": null,
+      "sdk": {
+        "provider": "openai",
+        "framework": "openai-agents-python",
+        "model": "gpt-4.1-mini",
+        "output_schema": "SpecialistAgentOutput",
+        "runtime": {
+          "enabled": false,
+          "package_available": false,
+          "model": "gpt-4.1-mini",
+          "missing": [
+            "openai-agents package"
+          ]
+        }
+      },
+      "json_schema_endpoint": "/api/agents/schemas"
     },
     {
       "id": "agent-4",
       "agent_name": "WBS_Extractor_04",
       "wbs_category": "Floor Finishes",
       "sequence": 4,
-      "status": "active",
       "task": "Extract flooring systems such as tile, stone, vinyl, carpet, and raised floor into preparation and installation activities.",
-      "language_guidelines": {
-        "clarity": "Avoid shorthand in activity names.",
-        "granularity": "List each construction phase.",
-        "formatting": "Avoid duplicate or null entries."
-      },
-      "template_output": [
-        {
-          "WBS": "Floor Finishes",
-          "Activity Name": "Floor Finishes - Layout"
-        },
-        {
-          "WBS": "Floor Finishes",
-          "Activity Name": "Ceramic Tiles - Setting"
-        },
-        {
-          "WBS": "Floor Finishes",
-          "Activity Name": "Ceramic Tiles - Grouting"
-        },
-        {
-          "WBS": "Floor Finishes",
-          "Activity Name": "Raised Floor - Installation"
-        }
-      ],
-      "latest_output": [
-        {
-          "WBS": "Floor Finishes",
-          "Activity Name": "Floor Finishes - Layout"
-        },
-        {
-          "WBS": "Floor Finishes",
-          "Activity Name": "Ceramic Tiles - Setting"
-        },
-        {
-          "WBS": "Floor Finishes",
-          "Activity Name": "Ceramic Tiles - Grouting"
-        },
-        {
-          "WBS": "Floor Finishes",
-          "Activity Name": "Raised Floor - Installation"
-        }
-      ],
-      "last_run": null,
       "keywords": [
         "floor",
         "tile",
@@ -248,57 +235,67 @@
         "skirting"
       ],
       "resource_list": "Flooring Crew",
-      "boq_matches": 0
+      "template_output": [
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Floor Finishes - Layout"
+        },
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Ceramic Tiles - Setting"
+        },
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Ceramic Tiles - Grouting"
+        },
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Raised Floor - Installation"
+        }
+      ],
+      "status": "ready",
+      "boq_matches": 0,
+      "latest_output": [
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Floor Finishes - Layout"
+        },
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Ceramic Tiles - Setting"
+        },
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Ceramic Tiles - Grouting"
+        },
+        {
+          "WBS": "Floor Finishes",
+          "Activity Name": "Raised Floor - Installation"
+        }
+      ],
+      "last_run": null,
+      "sdk": {
+        "provider": "openai",
+        "framework": "openai-agents-python",
+        "model": "gpt-4.1-mini",
+        "output_schema": "SpecialistAgentOutput",
+        "runtime": {
+          "enabled": false,
+          "package_available": false,
+          "model": "gpt-4.1-mini",
+          "missing": [
+            "openai-agents package"
+          ]
+        }
+      },
+      "json_schema_endpoint": "/api/agents/schemas"
     },
     {
       "id": "agent-5",
       "agent_name": "WBS_Extractor_05",
       "wbs_category": "Wall Finishes",
       "sequence": 5,
-      "status": "active",
       "task": "Extract wall finishes such as paint, wall covering, cladding, and plastering into buildable steps.",
-      "language_guidelines": {
-        "clarity": "Use clear scheduler-ready wording.",
-        "granularity": "Split each painting or finishing layer.",
-        "formatting": "Filter non-workable entries."
-      },
-      "template_output": [
-        {
-          "WBS": "Wall Finishes",
-          "Activity Name": "Wall Finishes - Putty"
-        },
-        {
-          "WBS": "Wall Finishes",
-          "Activity Name": "Paint - First Coat"
-        },
-        {
-          "WBS": "Wall Finishes",
-          "Activity Name": "Paint - Second Coat"
-        },
-        {
-          "WBS": "Wall Finishes",
-          "Activity Name": "Paint - Final Coat"
-        }
-      ],
-      "latest_output": [
-        {
-          "WBS": "Wall Finishes",
-          "Activity Name": "Wall Finishes - Putty"
-        },
-        {
-          "WBS": "Wall Finishes",
-          "Activity Name": "Paint - First Coat"
-        },
-        {
-          "WBS": "Wall Finishes",
-          "Activity Name": "Paint - Second Coat"
-        },
-        {
-          "WBS": "Wall Finishes",
-          "Activity Name": "Paint - Final Coat"
-        }
-      ],
-      "last_run": null,
       "keywords": [
         "wall",
         "paint",
@@ -311,57 +308,67 @@
         "skim coat"
       ],
       "resource_list": "Wall Finishes Crew",
-      "boq_matches": 0
+      "template_output": [
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Wall Finishes - Putty"
+        },
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Paint - First Coat"
+        },
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Paint - Second Coat"
+        },
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Paint - Final Coat"
+        }
+      ],
+      "status": "ready",
+      "boq_matches": 0,
+      "latest_output": [
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Wall Finishes - Putty"
+        },
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Paint - First Coat"
+        },
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Paint - Second Coat"
+        },
+        {
+          "WBS": "Wall Finishes",
+          "Activity Name": "Paint - Final Coat"
+        }
+      ],
+      "last_run": null,
+      "sdk": {
+        "provider": "openai",
+        "framework": "openai-agents-python",
+        "model": "gpt-4.1-mini",
+        "output_schema": "SpecialistAgentOutput",
+        "runtime": {
+          "enabled": false,
+          "package_available": false,
+          "model": "gpt-4.1-mini",
+          "missing": [
+            "openai-agents package"
+          ]
+        }
+      },
+      "json_schema_endpoint": "/api/agents/schemas"
     },
     {
       "id": "agent-6",
       "agent_name": "WBS_Extractor_06",
       "wbs_category": "HVAC",
       "sequence": 6,
-      "status": "active",
       "task": "Extract ducting, air-side equipment, insulation, and diffusers into sequenced HVAC activities.",
-      "language_guidelines": {
-        "clarity": "Use MEP-compliant language.",
-        "granularity": "Break down work by component and stage.",
-        "formatting": "Do not include zero or undefined work."
-      },
-      "template_output": [
-        {
-          "WBS": "HVAC",
-          "Activity Name": "Ducting - Fabrication"
-        },
-        {
-          "WBS": "HVAC",
-          "Activity Name": "Ducting - First Fix"
-        },
-        {
-          "WBS": "HVAC",
-          "Activity Name": "Ducting - Insulation"
-        },
-        {
-          "WBS": "HVAC",
-          "Activity Name": "FCU - Final Installation"
-        }
-      ],
-      "latest_output": [
-        {
-          "WBS": "HVAC",
-          "Activity Name": "Ducting - Fabrication"
-        },
-        {
-          "WBS": "HVAC",
-          "Activity Name": "Ducting - First Fix"
-        },
-        {
-          "WBS": "HVAC",
-          "Activity Name": "Ducting - Insulation"
-        },
-        {
-          "WBS": "HVAC",
-          "Activity Name": "FCU - Final Installation"
-        }
-      ],
-      "last_run": null,
       "keywords": [
         "hvac",
         "duct",
@@ -375,57 +382,67 @@
         "thermostat"
       ],
       "resource_list": "HVAC Crew",
-      "boq_matches": 0
+      "template_output": [
+        {
+          "WBS": "HVAC",
+          "Activity Name": "Ducting - Fabrication"
+        },
+        {
+          "WBS": "HVAC",
+          "Activity Name": "Ducting - First Fix"
+        },
+        {
+          "WBS": "HVAC",
+          "Activity Name": "Ducting - Insulation"
+        },
+        {
+          "WBS": "HVAC",
+          "Activity Name": "FCU - Final Installation"
+        }
+      ],
+      "status": "ready",
+      "boq_matches": 0,
+      "latest_output": [
+        {
+          "WBS": "HVAC",
+          "Activity Name": "Ducting - Fabrication"
+        },
+        {
+          "WBS": "HVAC",
+          "Activity Name": "Ducting - First Fix"
+        },
+        {
+          "WBS": "HVAC",
+          "Activity Name": "Ducting - Insulation"
+        },
+        {
+          "WBS": "HVAC",
+          "Activity Name": "FCU - Final Installation"
+        }
+      ],
+      "last_run": null,
+      "sdk": {
+        "provider": "openai",
+        "framework": "openai-agents-python",
+        "model": "gpt-4.1-mini",
+        "output_schema": "SpecialistAgentOutput",
+        "runtime": {
+          "enabled": false,
+          "package_available": false,
+          "model": "gpt-4.1-mini",
+          "missing": [
+            "openai-agents package"
+          ]
+        }
+      },
+      "json_schema_endpoint": "/api/agents/schemas"
     },
     {
       "id": "agent-7",
       "agent_name": "WBS_Extractor_07",
       "wbs_category": "Electrical",
       "sequence": 7,
-      "status": "active",
       "task": "Extract power, lighting, fire alarm, data, and small power systems into first-fix and second-fix activities.",
-      "language_guidelines": {
-        "clarity": "Use IEC or electrical standard terms.",
-        "granularity": "Separate low-current and high-power systems.",
-        "formatting": "Format for P6 or Excel use."
-      },
-      "template_output": [
-        {
-          "WBS": "Electrical",
-          "Activity Name": "Lighting - Conduit First Fix"
-        },
-        {
-          "WBS": "Electrical",
-          "Activity Name": "Lighting - Wiring First Fix"
-        },
-        {
-          "WBS": "Electrical",
-          "Activity Name": "Power - Socket Installation"
-        },
-        {
-          "WBS": "Electrical",
-          "Activity Name": "Fire Alarm - Control Panel Installation"
-        }
-      ],
-      "latest_output": [
-        {
-          "WBS": "Electrical",
-          "Activity Name": "Lighting - Conduit First Fix"
-        },
-        {
-          "WBS": "Electrical",
-          "Activity Name": "Lighting - Wiring First Fix"
-        },
-        {
-          "WBS": "Electrical",
-          "Activity Name": "Power - Socket Installation"
-        },
-        {
-          "WBS": "Electrical",
-          "Activity Name": "Fire Alarm - Control Panel Installation"
-        }
-      ],
-      "last_run": null,
       "keywords": [
         "electrical",
         "lighting",
@@ -440,57 +457,67 @@
         "panel"
       ],
       "resource_list": "Electrical Crew",
-      "boq_matches": 0
+      "template_output": [
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Lighting - Conduit First Fix"
+        },
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Lighting - Wiring First Fix"
+        },
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Power - Socket Installation"
+        },
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Fire Alarm - Control Panel Installation"
+        }
+      ],
+      "status": "ready",
+      "boq_matches": 0,
+      "latest_output": [
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Lighting - Conduit First Fix"
+        },
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Lighting - Wiring First Fix"
+        },
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Power - Socket Installation"
+        },
+        {
+          "WBS": "Electrical",
+          "Activity Name": "Fire Alarm - Control Panel Installation"
+        }
+      ],
+      "last_run": null,
+      "sdk": {
+        "provider": "openai",
+        "framework": "openai-agents-python",
+        "model": "gpt-4.1-mini",
+        "output_schema": "SpecialistAgentOutput",
+        "runtime": {
+          "enabled": false,
+          "package_available": false,
+          "model": "gpt-4.1-mini",
+          "missing": [
+            "openai-agents package"
+          ]
+        }
+      },
+      "json_schema_endpoint": "/api/agents/schemas"
     },
     {
       "id": "agent-8",
       "agent_name": "WBS_Extractor_08",
       "wbs_category": "Miscellaneous",
       "sequence": 8,
-      "status": "active",
       "task": "Extract waterproofing, testing, signage, specialties, and close coordination items into actionable activities.",
-      "language_guidelines": {
-        "clarity": "Avoid placeholders or generic text.",
-        "granularity": "Convert umbrella items into real tasks.",
-        "formatting": "Keep one task per line."
-      },
-      "template_output": [
-        {
-          "WBS": "Miscellaneous",
-          "Activity Name": "Waterproofing - Membrane Installation"
-        },
-        {
-          "WBS": "Miscellaneous",
-          "Activity Name": "Signage - Installation"
-        },
-        {
-          "WBS": "Miscellaneous",
-          "Activity Name": "Testing - Plumbing Leak Check"
-        },
-        {
-          "WBS": "Miscellaneous",
-          "Activity Name": "Branding - Accessories Fixing"
-        }
-      ],
-      "latest_output": [
-        {
-          "WBS": "Miscellaneous",
-          "Activity Name": "Waterproofing - Membrane Installation"
-        },
-        {
-          "WBS": "Miscellaneous",
-          "Activity Name": "Signage - Installation"
-        },
-        {
-          "WBS": "Miscellaneous",
-          "Activity Name": "Testing - Plumbing Leak Check"
-        },
-        {
-          "WBS": "Miscellaneous",
-          "Activity Name": "Branding - Accessories Fixing"
-        }
-      ],
-      "last_run": null,
       "keywords": [
         "waterproof",
         "signage",
@@ -503,57 +530,67 @@
         "membrane"
       ],
       "resource_list": "Specialties Crew",
-      "boq_matches": 0
+      "template_output": [
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Waterproofing - Membrane Installation"
+        },
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Signage - Installation"
+        },
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Testing - Plumbing Leak Check"
+        },
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Branding - Accessories Fixing"
+        }
+      ],
+      "status": "ready",
+      "boq_matches": 0,
+      "latest_output": [
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Waterproofing - Membrane Installation"
+        },
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Signage - Installation"
+        },
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Testing - Plumbing Leak Check"
+        },
+        {
+          "WBS": "Miscellaneous",
+          "Activity Name": "Branding - Accessories Fixing"
+        }
+      ],
+      "last_run": null,
+      "sdk": {
+        "provider": "openai",
+        "framework": "openai-agents-python",
+        "model": "gpt-4.1-mini",
+        "output_schema": "SpecialistAgentOutput",
+        "runtime": {
+          "enabled": false,
+          "package_available": false,
+          "model": "gpt-4.1-mini",
+          "missing": [
+            "openai-agents package"
+          ]
+        }
+      },
+      "json_schema_endpoint": "/api/agents/schemas"
     },
     {
       "id": "agent-9",
       "agent_name": "WBS_Extractor_09",
       "wbs_category": "Outdoor Areas",
       "sequence": 9,
-      "status": "active",
       "task": "Extract external works, landlord interfaces, approvals, and site access scope into schedulable activities.",
-      "language_guidelines": {
-        "clarity": "Describe approval steps and access tasks clearly.",
-        "granularity": "Show real tasks even for coordination items.",
-        "formatting": "Avoid placeholders or notes."
-      },
-      "template_output": [
-        {
-          "WBS": "Outdoor Areas",
-          "Activity Name": "Landlord Approval - Shop Drawings"
-        },
-        {
-          "WBS": "Outdoor Areas",
-          "Activity Name": "External Paving - Installation"
-        },
-        {
-          "WBS": "Outdoor Areas",
-          "Activity Name": "Access Coordination - Permit Clearance"
-        },
-        {
-          "WBS": "Outdoor Areas",
-          "Activity Name": "Landlord Signoff - Final Walkthrough"
-        }
-      ],
-      "latest_output": [
-        {
-          "WBS": "Outdoor Areas",
-          "Activity Name": "Landlord Approval - Shop Drawings"
-        },
-        {
-          "WBS": "Outdoor Areas",
-          "Activity Name": "External Paving - Installation"
-        },
-        {
-          "WBS": "Outdoor Areas",
-          "Activity Name": "Access Coordination - Permit Clearance"
-        },
-        {
-          "WBS": "Outdoor Areas",
-          "Activity Name": "Landlord Signoff - Final Walkthrough"
-        }
-      ],
-      "last_run": null,
       "keywords": [
         "outdoor",
         "external",
@@ -567,7 +604,60 @@
         "access"
       ],
       "resource_list": "External Works Crew",
-      "boq_matches": 0
+      "template_output": [
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "Landlord Approval - Shop Drawings"
+        },
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "External Paving - Installation"
+        },
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "Access Coordination - Permit Clearance"
+        },
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "Landlord Signoff - Final Walkthrough"
+        }
+      ],
+      "status": "ready",
+      "boq_matches": 0,
+      "latest_output": [
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "Landlord Approval - Shop Drawings"
+        },
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "External Paving - Installation"
+        },
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "Access Coordination - Permit Clearance"
+        },
+        {
+          "WBS": "Outdoor Areas",
+          "Activity Name": "Landlord Signoff - Final Walkthrough"
+        }
+      ],
+      "last_run": null,
+      "sdk": {
+        "provider": "openai",
+        "framework": "openai-agents-python",
+        "model": "gpt-4.1-mini",
+        "output_schema": "SpecialistAgentOutput",
+        "runtime": {
+          "enabled": false,
+          "package_available": false,
+          "model": "gpt-4.1-mini",
+          "missing": [
+            "openai-agents package"
+          ]
+        }
+      },
+      "json_schema_endpoint": "/api/agents/schemas"
     }
   ],
   "planner": {
@@ -585,7 +675,35 @@
     "status": "ready",
     "last_run": null,
     "export_file": "primavera_schedule_import.xlsx",
-    "export_updated_at": "2026-04-11T15:16:37"
+    "export_updated_at": "2026-04-11T15:26:11",
+    "sdk": {
+      "provider": "openai",
+      "framework": "openai-agents-python",
+      "model": "gpt-4.1-mini",
+      "output_schema": "ProjectManagerAgentOutput",
+      "runtime": {
+        "enabled": false,
+        "package_available": false,
+        "model": "gpt-4.1-mini",
+        "missing": [
+          "openai-agents package"
+        ]
+      }
+    },
+    "json_schema_endpoint": "/api/agents/schemas"
+  },
+  "workflow": {
+    "status": "idle",
+    "last_run": null,
+    "mode": "parallel-specialists-then-project-manager"
+  },
+  "boq_upload": {
+    "filename": null,
+    "stored_path": null,
+    "uploaded_at": null,
+    "status": "No BOQ uploaded yet",
+    "row_count": 0,
+    "detected_sheet": null
   },
   "timeline": {
     "start_date": "2026-04-11",
@@ -977,34 +1095,13 @@
   "chat_history": [
     {
       "role": "assistant",
-      "content": "I can explain any BOQ agent, run one for you, or log a lost workday and recalculate the full schedule."
-    },
-    {
-      "role": "assistant",
-      "content": "Doors and Partitions agent reviewed the BOQ scope and refreshed 4 scheduler-ready activities."
-    },
-    {
-      "role": "assistant",
-      "content": "BOQ file 'demo_boq.xlsx' uploaded successfully and is ready for schedule extraction."
+      "content": "Upload a BOQ workbook, then run the workflow to launch all specialist agents together and generate the Primavera export."
     }
   ],
   "project_summary": {
     "total_duration_days": 108,
     "delay_events": 0,
-    "last_action": "Uploaded BOQ file demo_boq.xlsx",
+    "last_action": "Dashboard initialized",
     "primavera_rows": 38
-  },
-  "boq_upload": {
-    "filename": null,
-    "stored_path": null,
-    "uploaded_at": null,
-    "status": "No BOQ uploaded yet",
-    "row_count": 0,
-    "detected_sheet": null
-  },
-  "workflow": {
-    "status": "idle",
-    "last_run": null,
-    "mode": "parallel-specialists-then-project-manager"
   }
 }

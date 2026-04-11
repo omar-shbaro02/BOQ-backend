@@ -15,9 +15,15 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import uvicorn
 import xml.etree.ElementTree as ET
+
+try:
+    from agents import Agent, Runner
+except ImportError:
+    Agent = None
+    Runner = None
 
 APP_DIR = Path(__file__).resolve().parent
 STATE_FILE = APP_DIR / "project_state.json"
@@ -26,6 +32,8 @@ UPLOAD_DIR = APP_DIR / "uploads"
 PRIMAVERA_EXPORT_FILE = EXPORT_DIR / "primavera_schedule_import.xlsx"
 TODAY = date.today()
 PRIMAVERA_PROJECT_ID = "BOQIMPORT"
+PRIMAVERA_HOURS_PER_DAY = 8
+OPENAI_AGENT_MODEL = os.getenv("OPENAI_AGENT_MODEL", "gpt-4.1-mini")
 XML_NS = {"a": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
 SPECIALIST_AGENTS = [
@@ -54,6 +62,29 @@ class TimelineEventRequest(BaseModel):
     lost_days: int = 1
 
 
+class SpecialistActivityOutput(BaseModel):
+    wbs: str = Field(alias="WBS")
+    activity_name: str = Field(alias="Activity Name")
+
+
+class SpecialistAgentOutput(BaseModel):
+    activities: list[SpecialistActivityOutput]
+
+
+class ScheduleActivityOutput(BaseModel):
+    wbs: str
+    activity_name: str
+    duration_days: int = Field(ge=1)
+    predecessors: str
+    start_date: str
+    finish_date: str
+
+
+class ProjectManagerAgentOutput(BaseModel):
+    schedule: list[ScheduleActivityOutput]
+    primavera_import_notes: list[str] = Field(default_factory=list)
+
+
 def seed_state() -> dict[str, Any]:
     agents = []
     for agent in SPECIALIST_AGENTS:
@@ -64,7 +95,9 @@ def seed_state() -> dict[str, Any]:
         agent_state["last_run"] = None
         agents.append(agent_state)
     schedule = build_schedule(agents, [])
-    return {"agents": agents, "planner": {**deepcopy(PLANNER_AGENT), "status": "ready", "last_run": None, "export_file": PRIMAVERA_EXPORT_FILE.name, "export_updated_at": None}, "workflow": {"status": "idle", "last_run": None, "mode": "parallel-specialists-then-project-manager"}, "boq_upload": {"filename": None, "stored_path": None, "uploaded_at": None, "status": "No BOQ uploaded yet", "row_count": 0, "detected_sheet": None}, "timeline": {"start_date": TODAY.isoformat(), "finish_date": schedule[-1]["finish_date"], "schedule": schedule, "events": []}, "chat_history": [{"role": "assistant", "content": "Upload a BOQ workbook, then run the workflow to launch all specialist agents together and generate the Primavera export."}], "project_summary": {"total_duration_days": sum(item["duration_days"] for item in schedule), "delay_events": 0, "last_action": "Dashboard initialized", "primavera_rows": len(schedule)}}
+    state = {"agents": agents, "planner": {**deepcopy(PLANNER_AGENT), "status": "ready", "last_run": None, "export_file": PRIMAVERA_EXPORT_FILE.name, "export_updated_at": None}, "workflow": {"status": "idle", "last_run": None, "mode": "parallel-specialists-then-project-manager"}, "boq_upload": {"filename": None, "stored_path": None, "uploaded_at": None, "status": "No BOQ uploaded yet", "row_count": 0, "detected_sheet": None}, "timeline": {"start_date": TODAY.isoformat(), "finish_date": schedule[-1]["finish_date"], "schedule": schedule, "events": []}, "chat_history": [{"role": "assistant", "content": "Upload a BOQ workbook, then run the workflow to launch all specialist agents together and generate the Primavera export."}], "project_summary": {"total_duration_days": sum(item["duration_days"] for item in schedule), "delay_events": 0, "last_action": "Dashboard initialized", "primavera_rows": len(schedule)}}
+    attach_agent_contracts(state)
+    return state
 
 
 def load_state() -> dict[str, Any]:
@@ -108,6 +141,7 @@ def load_state() -> dict[str, Any]:
     state.setdefault("chat_history", seeded["chat_history"])
     state.setdefault("project_summary", seeded["project_summary"])
     recalculate_timeline(state, state["project_summary"].get("last_action", "State loaded"))
+    attach_agent_contracts(state)
     save_state(state)
     return state
 
@@ -115,7 +149,66 @@ def load_state() -> dict[str, Any]:
 def save_state(state: dict[str, Any]) -> None:
     recalculate_timeline(state, state["project_summary"].get("last_action", "State saved"))
     refresh_primavera_export(state)
+    attach_agent_contracts(state)
     STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
+
+
+def pydantic_to_dict(model: BaseModel, *, by_alias: bool = False) -> dict[str, Any]:
+    if hasattr(model, "model_dump"):
+        return model.model_dump(by_alias=by_alias)
+    return model.dict(by_alias=by_alias)
+
+
+def validate_model(model: type[BaseModel], value: Any) -> BaseModel:
+    if hasattr(model, "model_validate"):
+        return model.model_validate(value)
+    return model.parse_obj(value)
+
+
+def schema_for(model: type[BaseModel]) -> dict[str, Any]:
+    if hasattr(model, "model_json_schema"):
+        return model.model_json_schema()
+    return model.schema()
+
+
+def sdk_runtime_status() -> dict[str, Any]:
+    return {
+        "enabled": Agent is not None and Runner is not None and bool(os.getenv("OPENAI_API_KEY")),
+        "package_available": Agent is not None and Runner is not None,
+        "model": OPENAI_AGENT_MODEL,
+        "missing": [
+            item
+            for item, missing in {
+                "openai-agents package": Agent is None or Runner is None,
+                "OPENAI_API_KEY": not bool(os.getenv("OPENAI_API_KEY")),
+            }.items()
+            if missing
+        ],
+    }
+
+
+def attach_agent_contracts(state: dict[str, Any]) -> None:
+    runtime = sdk_runtime_status()
+    for agent in state.get("agents", []):
+        agent["sdk"] = {
+            "provider": "openai",
+            "framework": "openai-agents-python",
+            "model": OPENAI_AGENT_MODEL,
+            "output_schema": "SpecialistAgentOutput",
+            "runtime": runtime,
+        }
+        agent["json_schema_endpoint"] = "/api/agents/schemas"
+
+    planner = state.get("planner")
+    if isinstance(planner, dict):
+        planner["sdk"] = {
+            "provider": "openai",
+            "framework": "openai-agents-python",
+            "model": OPENAI_AGENT_MODEL,
+            "output_schema": "ProjectManagerAgentOutput",
+            "runtime": runtime,
+        }
+        planner["json_schema_endpoint"] = "/api/agents/schemas"
 
 
 def append_chat(state: dict[str, Any], role: str, content: str) -> None:
@@ -507,7 +600,18 @@ def health_check() -> dict[str, str]:
 
 @app.get('/api/dashboard')
 def get_dashboard() -> dict[str, Any]:
+    attach_agent_contracts(STATE)
     return STATE
+
+
+@app.get("/api/agents/schemas")
+def get_agent_schemas() -> dict[str, Any]:
+    return {
+        "runtime": sdk_runtime_status(),
+        "specialist_agent_output": schema_for(SpecialistAgentOutput),
+        "project_manager_agent_output": schema_for(ProjectManagerAgentOutput),
+        "primavera_xlsx_sheets": build_primavera_rows(STATE["timeline"]["schedule"]),
+    }
 
 
 @app.post('/api/agents/{agent_id}/run')
@@ -522,6 +626,14 @@ def run_agent(agent_id: str) -> dict[str, Any]:
 async def run_workflow() -> dict[str, Any]:
     result = await run_full_workflow_logic(STATE)
     append_chat(STATE, 'assistant', result)
+    save_state(STATE)
+    return STATE
+
+
+@app.post("/api/agents/run-all")
+async def run_all_agents() -> dict[str, Any]:
+    result = await run_full_workflow_logic(STATE)
+    append_chat(STATE, "assistant", result)
     save_state(STATE)
     return STATE
 
