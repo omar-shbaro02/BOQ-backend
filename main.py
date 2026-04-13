@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import os
 import re
@@ -52,6 +53,11 @@ PLANNER_AGENT = {"id": "agent-10", "name": "Project Manager Agent", "role": "PMP
 
 DURATION_RULES = {"Doors and Partitions": [2, 4, 3, 2], "Wood Works": [2, 5, 3, 3], "Ceiling": [3, 3, 2, 2], "Floor Finishes": [2, 4, 2, 3], "Wall Finishes": [2, 2, 2, 2], "HVAC": [4, 5, 3, 3], "Electrical": [3, 4, 3, 2], "Miscellaneous": [2, 2, 2, 2], "Outdoor Areas": [2, 4, 2, 2]}
 PACKAGE_WBS_CODES = {"Preliminaries": "BOQIMPORT.PRELIM", "Doors and Partitions": "BOQIMPORT.ARCH.DoorsPartitions", "Wood Works": "BOQIMPORT.ARCH.WoodWorks", "Ceiling": "BOQIMPORT.ARCH.Ceiling", "Floor Finishes": "BOQIMPORT.ARCH.FloorFinishes", "Wall Finishes": "BOQIMPORT.ARCH.WallFinishes", "HVAC": "BOQIMPORT.MEP.HVAC", "Electrical": "BOQIMPORT.MEP.Electrical", "Miscellaneous": "BOQIMPORT.Specialties", "Outdoor Areas": "BOQIMPORT.External", "Closeout / Testing & Commissioning": "BOQIMPORT.Closeout"}
+PACKAGE_DEPENDENCY_RULES = {
+    "Ceiling": ["Doors and Partitions"],
+    "Floor Finishes": ["Ceiling"],
+    "Wall Finishes": ["Ceiling"],
+}
 
 class ChatRequest(BaseModel):
     message: str
@@ -244,9 +250,7 @@ def extract_pdf_boq_rows_via_openai(path: Path) -> tuple[list[dict[str, Any]], s
         raise RuntimeError("OpenAI PDF extraction requires an active OpenAI runtime.")
 
     client = get_openai_client()
-    with path.open("rb") as handle:
-        uploaded = client.files.create(file=handle, purpose="user_data")
-
+    file_data = f"data:application/pdf;base64,{base64.b64encode(path.read_bytes()).decode('ascii')}"
     prompt = (
         "Read this BOQ PDF and extract its measurable BOQ rows. "
         'Return only valid JSON shaped exactly like {"rows":[{"description":"string","quantity":1.0}]}. '
@@ -255,50 +259,55 @@ def extract_pdf_boq_rows_via_openai(path: Path) -> tuple[list[dict[str, Any]], s
         "Ignore page headers, footers, signatures, totals, and narrative paragraphs."
     )
 
-    try:
-        response = client.responses.create(
-            model=OPENAI_AGENT_MODEL,
-            input=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "input_file", "file_id": uploaded.id},
-                        {"type": "input_text", "text": prompt},
-                    ],
-                }
-            ],
-        )
-        payload = extract_json_object(response.output_text or "{}")
-        rows = payload.get("rows", [])
-        if not isinstance(rows, list):
-            raise ValueError("OpenAI PDF extraction did not return a rows array.")
-        parsed_rows: list[dict[str, Any]] = []
-        for item in rows:
-            if not isinstance(item, dict):
-                continue
-            description = normalize_text(item.get("description"))
-            quantity = item.get("quantity")
-            if not description:
-                continue
-            try:
-                quantity_value = float(quantity) if quantity is not None else None
-            except (TypeError, ValueError):
-                quantity_value = None
-            parsed_rows.append(
-                {
-                    "cells": [description, quantity_value] if quantity_value is not None else [description],
-                    "description": description,
-                    "quantity": quantity_value,
-                }
-            )
-        if not parsed_rows:
-            raise ValueError("OpenAI PDF extraction returned no usable BOQ rows.")
-        return parsed_rows, "PDF Upload"
-    finally:
+    response = client.chat.completions.create(
+        model=OPENAI_AGENT_MODEL,
+        temperature=0.1,
+        response_format={"type": "json_object"},
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "file",
+                        "file": {
+                            "filename": path.name,
+                            "file_data": file_data,
+                        },
+                    },
+                    {
+                        "type": "text",
+                        "text": prompt,
+                    },
+                ],
+            }
+        ],
+    )
+    payload = extract_json_object(response.choices[0].message.content or "{}")
+    rows = payload.get("rows", [])
+    if not isinstance(rows, list):
+        raise ValueError("OpenAI PDF extraction did not return a rows array.")
+    parsed_rows: list[dict[str, Any]] = []
+    for item in rows:
+        if not isinstance(item, dict):
+            continue
+        description = normalize_text(item.get("description"))
+        quantity = item.get("quantity")
+        if not description:
+            continue
         try:
-            client.files.delete(uploaded.id)
-        except Exception:
-            pass
+            quantity_value = float(quantity) if quantity is not None else None
+        except (TypeError, ValueError):
+            quantity_value = None
+        parsed_rows.append(
+            {
+                "cells": [description, quantity_value] if quantity_value is not None else [description],
+                "description": description,
+                "quantity": quantity_value,
+            }
+        )
+    if not parsed_rows:
+        raise ValueError("OpenAI PDF extraction returned no usable BOQ rows.")
+    return parsed_rows, "PDF Upload"
 
 
 def normalize_specialist_activities(value: Any, agent: dict[str, Any]) -> list[dict[str, str]]:
@@ -336,7 +345,7 @@ def normalize_specialist_activities(value: Any, agent: dict[str, Any]) -> list[d
     return normalized
 
 
-def normalize_project_manager_schedule(value: Any, fallback_schedule: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def normalize_project_manager_schedule(value: Any, fallback_schedule: list[dict[str, Any]], events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     payload = value
     if isinstance(payload, BaseModel):
         payload = pydantic_to_dict(payload)
@@ -362,19 +371,10 @@ def normalize_project_manager_schedule(value: Any, fallback_schedule: list[dict[
         fallback_item = fallback_lookup.get(activity_name)
         wbs = normalize_text(item.get("WBS") or item.get("wbs") or (fallback_item["wbs"] if fallback_item else ""))
         predecessors = normalize_text(item.get("Predecessor(s)") or item.get("predecessors") or (fallback_item["predecessors"] if fallback_item else "Project Start"))
-        start_date = normalize_text(item.get("start_date") or (fallback_item["start_date"] if fallback_item else ""))
-        finish_date = normalize_text(item.get("finish_date") or (fallback_item["finish_date"] if fallback_item else ""))
         try:
             duration_days = int(item.get("Duration (Days)") or item.get("duration_days") or (fallback_item["duration_days"] if fallback_item else 1))
         except (TypeError, ValueError):
             duration_days = fallback_item["duration_days"] if fallback_item else 1
-        if not start_date or not finish_date:
-            continue
-        try:
-            datetime.strptime(start_date, "%Y-%m-%d")
-            datetime.strptime(finish_date, "%Y-%m-%d")
-        except ValueError:
-            continue
         normalized.append(
             {
                 "wbs": wbs,
@@ -382,13 +382,13 @@ def normalize_project_manager_schedule(value: Any, fallback_schedule: list[dict[
                 "duration_days": max(1, duration_days),
                 "predecessors": predecessors or "Project Start",
                 "resource_list": fallback_item["resource_list"] if fallback_item else "",
-                "start_date": start_date,
-                "finish_date": finish_date,
                 "package_sequence": fallback_item["package_sequence"] if fallback_item else 999,
             }
         )
-    normalized.sort(key=lambda row: (row["start_date"], row["package_sequence"], row["activity_name"]))
-    return normalized
+    if not normalized:
+        return []
+    project_start = datetime.strptime(fallback_schedule[0]["start_date"], "%Y-%m-%d").date()
+    return compute_schedule_dates(normalized, events, project_start)
 
 
 def build_specialist_sdk_agent(agent_config: dict[str, Any]) -> Any:
@@ -444,7 +444,7 @@ def run_specialist_sdk(agent_config: dict[str, Any], boq_rows: list[dict[str, An
     content = response.choices[0].message.content or "{}"
     final_output = validate_model(SpecialistAgentOutput, extract_json_object(content))
     normalized = normalize_specialist_activities(final_output, agent_config)
-    return normalized or None
+    return normalized
 
 
 def run_project_manager_sdk(state: dict[str, Any], fallback_schedule: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
@@ -485,7 +485,7 @@ def run_project_manager_sdk(state: dict[str, Any], fallback_schedule: list[dict[
     )
     content = response.choices[0].message.content or "{}"
     final_output = validate_model(ProjectManagerAgentOutput, extract_json_object(content))
-    normalized = normalize_project_manager_schedule(final_output, fallback_schedule)
+    normalized = normalize_project_manager_schedule(final_output, fallback_schedule, state["timeline"]["events"])
     return normalized or None
 
 
@@ -787,32 +787,86 @@ def apply_delay_events(base_date: date, events: list[dict[str, Any]]) -> date:
     return adjusted
 
 
+def split_predecessors(value: str) -> list[str]:
+    return [part.strip() for part in str(value or "").split(",") if part.strip()]
+
+
+def compute_schedule_dates(schedule: list[dict[str, Any]], events: list[dict[str, Any]], project_start: date) -> list[dict[str, Any]]:
+    scheduled_dates: dict[str, tuple[date, date]] = {}
+    pending = [dict(item) for item in schedule]
+    resolved: list[dict[str, Any]] = []
+
+    while pending:
+        progress_made = False
+        remaining: list[dict[str, Any]] = []
+
+        for item in pending:
+            predecessor_names = [name for name in split_predecessors(item.get("predecessors", "")) if name != "Project Start"]
+            unresolved = [name for name in predecessor_names if name not in scheduled_dates]
+            if unresolved:
+                remaining.append(item)
+                continue
+
+            earliest_start = project_start
+            if predecessor_names:
+                earliest_start = max(scheduled_dates[name][1] + timedelta(days=1) for name in predecessor_names)
+            start_date = apply_delay_events(earliest_start, events)
+            duration_days = max(1, int(item.get("duration_days", 1)))
+            finish_date = start_date + timedelta(days=duration_days - 1)
+
+            item["start_date"] = start_date.isoformat()
+            item["finish_date"] = finish_date.isoformat()
+            scheduled_dates[item["activity_name"]] = (start_date, finish_date)
+            resolved.append(item)
+            progress_made = True
+
+        if progress_made:
+            pending = remaining
+            continue
+
+        # Break cycles or unknown predecessor references by preserving stable order
+        fallback_item = remaining.pop(0)
+        previous_finish = max((dates[1] for dates in scheduled_dates.values()), default=project_start - timedelta(days=1))
+        start_date = apply_delay_events(previous_finish + timedelta(days=1), events)
+        duration_days = max(1, int(fallback_item.get("duration_days", 1)))
+        finish_date = start_date + timedelta(days=duration_days - 1)
+        fallback_item["start_date"] = start_date.isoformat()
+        fallback_item["finish_date"] = finish_date.isoformat()
+        scheduled_dates[fallback_item["activity_name"]] = (start_date, finish_date)
+        resolved.append(fallback_item)
+        pending = remaining
+
+    resolved.sort(key=lambda row: (row["start_date"], row["package_sequence"], row["activity_name"]))
+    return resolved
+
+
 def build_schedule(agents: list[dict[str, Any]], events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     mobilization_start = apply_delay_events(TODAY, events)
     mobilization_finish = mobilization_start + timedelta(days=4)
     schedule: list[dict[str, Any]] = [{'wbs': 'Preliminaries', 'activity_name': 'Site Mobilization', 'duration_days': 5, 'predecessors': 'Project Start', 'resource_list': 'Site Team', 'start_date': mobilization_start.isoformat(), 'finish_date': mobilization_finish.isoformat(), 'package_sequence': 0}]
     closeout_predecessors: list[str] = []
-    latest_finish = mobilization_finish
+    latest_activity_by_wbs = {"Preliminaries": "Site Mobilization"}
     for agent in sorted(agents, key=lambda item: item['sequence']):
         durations = DURATION_RULES.get(agent['wbs_category'], [2] * max(len(agent['latest_output']), 1))
-        package_start = apply_delay_events(mobilization_finish + timedelta(days=1), events)
-        previous_activity = 'Site Mobilization'
-        package_finish = mobilization_finish
         for index, output in enumerate(agent['latest_output']):
             duration = durations[index] if index < len(durations) else durations[-1]
-            start_date = package_start if index == 0 else package_finish + timedelta(days=1)
-            start_date = apply_delay_events(start_date, events)
-            finish_date = start_date + timedelta(days=duration - 1)
-            schedule.append({'wbs': output['WBS'], 'activity_name': output['Activity Name'], 'duration_days': duration, 'predecessors': previous_activity, 'resource_list': agent['resource_list'], 'start_date': start_date.isoformat(), 'finish_date': finish_date.isoformat(), 'package_sequence': agent['sequence']})
-            previous_activity = output['Activity Name']
-            package_finish = finish_date
-        closeout_predecessors.append(previous_activity)
-        latest_finish = max(latest_finish, package_finish)
-    closeout_start = apply_delay_events(latest_finish + timedelta(days=1), events)
-    closeout_finish = closeout_start + timedelta(days=4)
-    schedule.append({'wbs': 'Closeout / Testing & Commissioning', 'activity_name': 'Testing, Snagging, and Handover', 'duration_days': 5, 'predecessors': ', '.join(closeout_predecessors), 'resource_list': 'Project Team', 'start_date': closeout_start.isoformat(), 'finish_date': closeout_finish.isoformat(), 'package_sequence': 99})
-    schedule.sort(key=lambda item: (item['start_date'], item['package_sequence'], item['activity_name']))
-    return schedule
+            if index == 0:
+                predecessor_names = []
+                for dependency_wbs in PACKAGE_DEPENDENCY_RULES.get(agent["wbs_category"], []):
+                    dependency_activity = latest_activity_by_wbs.get(dependency_wbs)
+                    if dependency_activity:
+                        predecessor_names.append(dependency_activity)
+                if not predecessor_names:
+                    predecessor_names = ["Site Mobilization"]
+                predecessors = ", ".join(predecessor_names)
+            else:
+                predecessors = agent['latest_output'][index - 1]['Activity Name']
+            schedule.append({'wbs': output['WBS'], 'activity_name': output['Activity Name'], 'duration_days': duration, 'predecessors': predecessors, 'resource_list': agent['resource_list'], 'package_sequence': agent['sequence']})
+        if agent['latest_output']:
+            latest_activity_by_wbs[agent['wbs_category']] = agent['latest_output'][-1]['Activity Name']
+            closeout_predecessors.append(agent['latest_output'][-1]['Activity Name'])
+    schedule.append({'wbs': 'Closeout / Testing & Commissioning', 'activity_name': 'Testing, Snagging, and Handover', 'duration_days': 5, 'predecessors': ', '.join(closeout_predecessors), 'resource_list': 'Project Team', 'package_sequence': 99})
+    return compute_schedule_dates(schedule, events, mobilization_start)
 
 
 def excel_serial(date_string: str) -> int:

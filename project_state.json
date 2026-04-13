@@ -657,7 +657,7 @@
     "status": "ready",
     "last_run": null,
     "export_file": "primavera_schedule_import.xlsx",
-    "export_updated_at": "2026-04-11T18:18:26",
+    "export_updated_at": "2026-04-13T16:02:17",
     "sdk": {
       "provider": "openai",
       "framework": "openai-python",
@@ -686,8 +686,8 @@
     "detected_sheet": null
   },
   "timeline": {
-    "start_date": "2026-04-11",
-    "finish_date": "2026-05-05",
+    "start_date": "2026-04-13",
+    "finish_date": "2026-05-24",
     "schedule": [
       {
         "wbs": "Preliminaries",
@@ -695,8 +695,8 @@
         "duration_days": 5,
         "predecessors": "Project Start",
         "resource_list": "Site Team",
-        "start_date": "2026-04-11",
-        "finish_date": "2026-04-15",
+        "start_date": "2026-04-13",
+        "finish_date": "2026-04-17",
         "package_sequence": 0
       },
       {
@@ -705,9 +705,9 @@
         "duration_days": 2,
         "predecessors": "Site Mobilization",
         "resource_list": "Doors Crew",
-        "start_date": "2026-04-16",
-        "finish_date": "2026-04-17",
-        "package_sequence": 1
+        "package_sequence": 1,
+        "start_date": "2026-04-18",
+        "finish_date": "2026-04-19"
       },
       {
         "wbs": "Wood Works",
@@ -715,39 +715,9 @@
         "duration_days": 2,
         "predecessors": "Site Mobilization",
         "resource_list": "Joinery Crew",
-        "start_date": "2026-04-16",
-        "finish_date": "2026-04-17",
-        "package_sequence": 2
-      },
-      {
-        "wbs": "Ceiling",
-        "activity_name": "Ceiling - Framing",
-        "duration_days": 3,
-        "predecessors": "Site Mobilization",
-        "resource_list": "Ceiling Crew",
-        "start_date": "2026-04-16",
-        "finish_date": "2026-04-18",
-        "package_sequence": 3
-      },
-      {
-        "wbs": "Floor Finishes",
-        "activity_name": "Floor Finishes - Layout",
-        "duration_days": 2,
-        "predecessors": "Site Mobilization",
-        "resource_list": "Flooring Crew",
-        "start_date": "2026-04-16",
-        "finish_date": "2026-04-17",
-        "package_sequence": 4
-      },
-      {
-        "wbs": "Wall Finishes",
-        "activity_name": "Wall Finishes - Putty",
-        "duration_days": 2,
-        "predecessors": "Site Mobilization",
-        "resource_list": "Wall Finishes Crew",
-        "start_date": "2026-04-16",
-        "finish_date": "2026-04-17",
-        "package_sequence": 5
+        "package_sequence": 2,
+        "start_date": "2026-04-18",
+        "finish_date": "2026-04-19"
       },
       {
         "wbs": "HVAC",
@@ -755,9 +725,9 @@
         "duration_days": 4,
         "predecessors": "Site Mobilization",
         "resource_list": "HVAC Crew",
-        "start_date": "2026-04-16",
-        "finish_date": "2026-04-19",
-        "package_sequence": 6
+        "package_sequence": 6,
+        "start_date": "2026-04-18",
+        "finish_date": "2026-04-21"
       },
       {
         "wbs": "Electrical",
@@ -765,9 +735,9 @@
         "duration_days": 3,
         "predecessors": "Site Mobilization",
         "resource_list": "Electrical Crew",
-        "start_date": "2026-04-16",
-        "finish_date": "2026-04-18",
-        "package_sequence": 7
+        "package_sequence": 7,
+        "start_date": "2026-04-18",
+        "finish_date": "2026-04-20"
       },
       {
         "wbs": "Miscellaneous",
@@ -775,9 +745,9 @@
         "duration_days": 2,
         "predecessors": "Site Mobilization",
         "resource_list": "Specialties Crew",
-        "start_date": "2026-04-16",
-        "finish_date": "2026-04-17",
-        "package_sequence": 8
+        "package_sequence": 8,
+        "start_date": "2026-04-18",
+        "finish_date": "2026-04-19"
       },
       {
         "wbs": "Outdoor Areas",
@@ -785,9 +755,9 @@
         "duration_days": 2,
         "predecessors": "Site Mobilization",
         "resource_list": "External Works Crew",
-        "start_date": "2026-04-16",
-        "finish_date": "2026-04-17",
-        "package_sequence": 9
+        "package_sequence": 9,
+        "start_date": "2026-04-18",
+        "finish_date": "2026-04-19"
       },
       {
         "wbs": "Doors and Partitions",
@@ -795,9 +765,9 @@
         "duration_days": 4,
         "predecessors": "Partitions - Marking",
         "resource_list": "Doors Crew",
-        "start_date": "2026-04-18",
-        "finish_date": "2026-04-21",
-        "package_sequence": 1
+        "package_sequence": 1,
+        "start_date": "2026-04-20",
+        "finish_date": "2026-04-23"
       },
       {
         "wbs": "Wood Works",
@@ -805,29 +775,9 @@
         "duration_days": 5,
         "predecessors": "Joinery - Site Measurements",
         "resource_list": "Joinery Crew",
-        "start_date": "2026-04-18",
-        "finish_date": "2026-04-22",
-        "package_sequence": 2
-      },
-      {
-        "wbs": "Floor Finishes",
-        "activity_name": "Ceramic Tiles - Setting",
-        "duration_days": 4,
-        "predecessors": "Floor Finishes - Layout",
-        "resource_list": "Flooring Crew",
-        "start_date": "2026-04-18",
-        "finish_date": "2026-04-21",
-        "package_sequence": 4
-      },
-      {
-        "wbs": "Wall Finishes",
-        "activity_name": "Paint - First Coat",
-        "duration_days": 2,
-        "predecessors": "Wall Finishes - Putty",
-        "resource_list": "Wall Finishes Crew",
-        "start_date": "2026-04-18",
-        "finish_date": "2026-04-19",
-        "package_sequence": 5
+        "package_sequence": 2,
+        "start_date": "2026-04-20",
+        "finish_date": "2026-04-24"
       },
       {
         "wbs": "Miscellaneous",
@@ -835,9 +785,9 @@
         "duration_days": 2,
         "predecessors": "Waterproofing - Membrane Installation",
         "resource_list": "Specialties Crew",
-        "start_date": "2026-04-18",
-        "finish_date": "2026-04-19",
-        "package_sequence": 8
+        "package_sequence": 8,
+        "start_date": "2026-04-20",
+        "finish_date": "2026-04-21"
       },
       {
         "wbs": "Outdoor Areas",
@@ -845,19 +795,9 @@
         "duration_days": 4,
         "predecessors": "Landlord Approval - Shop Drawings",
         "resource_list": "External Works Crew",
-        "start_date": "2026-04-18",
-        "finish_date": "2026-04-21",
-        "package_sequence": 9
-      },
-      {
-        "wbs": "Ceiling",
-        "activity_name": "Ceiling - Board Fixing",
-        "duration_days": 3,
-        "predecessors": "Ceiling - Framing",
-        "resource_list": "Ceiling Crew",
-        "start_date": "2026-04-19",
-        "finish_date": "2026-04-21",
-        "package_sequence": 3
+        "package_sequence": 9,
+        "start_date": "2026-04-20",
+        "finish_date": "2026-04-23"
       },
       {
         "wbs": "Electrical",
@@ -865,19 +805,9 @@
         "duration_days": 4,
         "predecessors": "Lighting - Conduit First Fix",
         "resource_list": "Electrical Crew",
-        "start_date": "2026-04-19",
-        "finish_date": "2026-04-22",
-        "package_sequence": 7
-      },
-      {
-        "wbs": "Wall Finishes",
-        "activity_name": "Paint - Second Coat",
-        "duration_days": 2,
-        "predecessors": "Paint - First Coat",
-        "resource_list": "Wall Finishes Crew",
-        "start_date": "2026-04-20",
-        "finish_date": "2026-04-21",
-        "package_sequence": 5
+        "package_sequence": 7,
+        "start_date": "2026-04-21",
+        "finish_date": "2026-04-24"
       },
       {
         "wbs": "HVAC",
@@ -885,9 +815,9 @@
         "duration_days": 5,
         "predecessors": "Ducting - Fabrication",
         "resource_list": "HVAC Crew",
-        "start_date": "2026-04-20",
-        "finish_date": "2026-04-24",
-        "package_sequence": 6
+        "package_sequence": 6,
+        "start_date": "2026-04-22",
+        "finish_date": "2026-04-26"
       },
       {
         "wbs": "Miscellaneous",
@@ -895,9 +825,9 @@
         "duration_days": 2,
         "predecessors": "Signage - Installation",
         "resource_list": "Specialties Crew",
-        "start_date": "2026-04-20",
-        "finish_date": "2026-04-21",
-        "package_sequence": 8
+        "package_sequence": 8,
+        "start_date": "2026-04-22",
+        "finish_date": "2026-04-23"
       },
       {
         "wbs": "Doors and Partitions",
@@ -905,39 +835,9 @@
         "duration_days": 3,
         "predecessors": "Partitions - Framing",
         "resource_list": "Doors Crew",
-        "start_date": "2026-04-22",
-        "finish_date": "2026-04-24",
-        "package_sequence": 1
-      },
-      {
-        "wbs": "Ceiling",
-        "activity_name": "Ceiling - Putty",
-        "duration_days": 2,
-        "predecessors": "Ceiling - Board Fixing",
-        "resource_list": "Ceiling Crew",
-        "start_date": "2026-04-22",
-        "finish_date": "2026-04-23",
-        "package_sequence": 3
-      },
-      {
-        "wbs": "Floor Finishes",
-        "activity_name": "Ceramic Tiles - Grouting",
-        "duration_days": 2,
-        "predecessors": "Ceramic Tiles - Setting",
-        "resource_list": "Flooring Crew",
-        "start_date": "2026-04-22",
-        "finish_date": "2026-04-23",
-        "package_sequence": 4
-      },
-      {
-        "wbs": "Wall Finishes",
-        "activity_name": "Paint - Final Coat",
-        "duration_days": 2,
-        "predecessors": "Paint - Second Coat",
-        "resource_list": "Wall Finishes Crew",
-        "start_date": "2026-04-22",
-        "finish_date": "2026-04-23",
-        "package_sequence": 5
+        "package_sequence": 1,
+        "start_date": "2026-04-24",
+        "finish_date": "2026-04-26"
       },
       {
         "wbs": "Miscellaneous",
@@ -945,9 +845,9 @@
         "duration_days": 2,
         "predecessors": "Testing - Plumbing Leak Check",
         "resource_list": "Specialties Crew",
-        "start_date": "2026-04-22",
-        "finish_date": "2026-04-23",
-        "package_sequence": 8
+        "package_sequence": 8,
+        "start_date": "2026-04-24",
+        "finish_date": "2026-04-25"
       },
       {
         "wbs": "Outdoor Areas",
@@ -955,9 +855,9 @@
         "duration_days": 2,
         "predecessors": "External Paving - Installation",
         "resource_list": "External Works Crew",
-        "start_date": "2026-04-22",
-        "finish_date": "2026-04-23",
-        "package_sequence": 9
+        "package_sequence": 9,
+        "start_date": "2026-04-24",
+        "finish_date": "2026-04-25"
       },
       {
         "wbs": "Wood Works",
@@ -965,9 +865,9 @@
         "duration_days": 3,
         "predecessors": "Joinery - Fabrication",
         "resource_list": "Joinery Crew",
-        "start_date": "2026-04-23",
-        "finish_date": "2026-04-25",
-        "package_sequence": 2
+        "package_sequence": 2,
+        "start_date": "2026-04-25",
+        "finish_date": "2026-04-27"
       },
       {
         "wbs": "Electrical",
@@ -975,29 +875,9 @@
         "duration_days": 3,
         "predecessors": "Lighting - Wiring First Fix",
         "resource_list": "Electrical Crew",
-        "start_date": "2026-04-23",
-        "finish_date": "2026-04-25",
-        "package_sequence": 7
-      },
-      {
-        "wbs": "Ceiling",
-        "activity_name": "Ceiling - Paint Final Coat",
-        "duration_days": 2,
-        "predecessors": "Ceiling - Putty",
-        "resource_list": "Ceiling Crew",
-        "start_date": "2026-04-24",
-        "finish_date": "2026-04-25",
-        "package_sequence": 3
-      },
-      {
-        "wbs": "Floor Finishes",
-        "activity_name": "Raised Floor - Installation",
-        "duration_days": 3,
-        "predecessors": "Ceramic Tiles - Grouting",
-        "resource_list": "Flooring Crew",
-        "start_date": "2026-04-24",
-        "finish_date": "2026-04-26",
-        "package_sequence": 4
+        "package_sequence": 7,
+        "start_date": "2026-04-25",
+        "finish_date": "2026-04-27"
       },
       {
         "wbs": "Outdoor Areas",
@@ -1005,9 +885,9 @@
         "duration_days": 2,
         "predecessors": "Access Coordination - Permit Clearance",
         "resource_list": "External Works Crew",
-        "start_date": "2026-04-24",
-        "finish_date": "2026-04-25",
-        "package_sequence": 9
+        "package_sequence": 9,
+        "start_date": "2026-04-26",
+        "finish_date": "2026-04-27"
       },
       {
         "wbs": "Doors and Partitions",
@@ -1015,9 +895,9 @@
         "duration_days": 2,
         "predecessors": "Doors - Frame Installation",
         "resource_list": "Doors Crew",
-        "start_date": "2026-04-25",
-        "finish_date": "2026-04-26",
-        "package_sequence": 1
+        "package_sequence": 1,
+        "start_date": "2026-04-27",
+        "finish_date": "2026-04-28"
       },
       {
         "wbs": "HVAC",
@@ -1025,9 +905,9 @@
         "duration_days": 3,
         "predecessors": "Ducting - First Fix",
         "resource_list": "HVAC Crew",
-        "start_date": "2026-04-25",
-        "finish_date": "2026-04-27",
-        "package_sequence": 6
+        "package_sequence": 6,
+        "start_date": "2026-04-27",
+        "finish_date": "2026-04-29"
       },
       {
         "wbs": "Wood Works",
@@ -1035,9 +915,9 @@
         "duration_days": 3,
         "predecessors": "Joinery - Finishing",
         "resource_list": "Joinery Crew",
-        "start_date": "2026-04-26",
-        "finish_date": "2026-04-28",
-        "package_sequence": 2
+        "package_sequence": 2,
+        "start_date": "2026-04-28",
+        "finish_date": "2026-04-30"
       },
       {
         "wbs": "Electrical",
@@ -1045,9 +925,19 @@
         "duration_days": 2,
         "predecessors": "Power - Socket Installation",
         "resource_list": "Electrical Crew",
-        "start_date": "2026-04-26",
-        "finish_date": "2026-04-27",
-        "package_sequence": 7
+        "package_sequence": 7,
+        "start_date": "2026-04-28",
+        "finish_date": "2026-04-29"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Ceiling - Framing",
+        "duration_days": 3,
+        "predecessors": "Doors - Shutter Hanging",
+        "resource_list": "Ceiling Crew",
+        "package_sequence": 3,
+        "start_date": "2026-04-29",
+        "finish_date": "2026-05-01"
       },
       {
         "wbs": "HVAC",
@@ -1055,9 +945,119 @@
         "duration_days": 3,
         "predecessors": "Ducting - Insulation",
         "resource_list": "HVAC Crew",
-        "start_date": "2026-04-28",
-        "finish_date": "2026-04-30",
-        "package_sequence": 6
+        "package_sequence": 6,
+        "start_date": "2026-04-30",
+        "finish_date": "2026-05-02"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Ceiling - Board Fixing",
+        "duration_days": 3,
+        "predecessors": "Ceiling - Framing",
+        "resource_list": "Ceiling Crew",
+        "package_sequence": 3,
+        "start_date": "2026-05-02",
+        "finish_date": "2026-05-04"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Ceiling - Putty",
+        "duration_days": 2,
+        "predecessors": "Ceiling - Board Fixing",
+        "resource_list": "Ceiling Crew",
+        "package_sequence": 3,
+        "start_date": "2026-05-05",
+        "finish_date": "2026-05-06"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Ceiling - Paint Final Coat",
+        "duration_days": 2,
+        "predecessors": "Ceiling - Putty",
+        "resource_list": "Ceiling Crew",
+        "package_sequence": 3,
+        "start_date": "2026-05-07",
+        "finish_date": "2026-05-08"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Floor Finishes - Layout",
+        "duration_days": 2,
+        "predecessors": "Ceiling - Paint Final Coat",
+        "resource_list": "Flooring Crew",
+        "package_sequence": 4,
+        "start_date": "2026-05-09",
+        "finish_date": "2026-05-10"
+      },
+      {
+        "wbs": "Wall Finishes",
+        "activity_name": "Wall Finishes - Putty",
+        "duration_days": 2,
+        "predecessors": "Ceiling - Paint Final Coat",
+        "resource_list": "Wall Finishes Crew",
+        "package_sequence": 5,
+        "start_date": "2026-05-09",
+        "finish_date": "2026-05-10"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Ceramic Tiles - Setting",
+        "duration_days": 4,
+        "predecessors": "Floor Finishes - Layout",
+        "resource_list": "Flooring Crew",
+        "package_sequence": 4,
+        "start_date": "2026-05-11",
+        "finish_date": "2026-05-14"
+      },
+      {
+        "wbs": "Wall Finishes",
+        "activity_name": "Paint - First Coat",
+        "duration_days": 2,
+        "predecessors": "Wall Finishes - Putty",
+        "resource_list": "Wall Finishes Crew",
+        "package_sequence": 5,
+        "start_date": "2026-05-11",
+        "finish_date": "2026-05-12"
+      },
+      {
+        "wbs": "Wall Finishes",
+        "activity_name": "Paint - Second Coat",
+        "duration_days": 2,
+        "predecessors": "Paint - First Coat",
+        "resource_list": "Wall Finishes Crew",
+        "package_sequence": 5,
+        "start_date": "2026-05-13",
+        "finish_date": "2026-05-14"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Ceramic Tiles - Grouting",
+        "duration_days": 2,
+        "predecessors": "Ceramic Tiles - Setting",
+        "resource_list": "Flooring Crew",
+        "package_sequence": 4,
+        "start_date": "2026-05-15",
+        "finish_date": "2026-05-16"
+      },
+      {
+        "wbs": "Wall Finishes",
+        "activity_name": "Paint - Final Coat",
+        "duration_days": 2,
+        "predecessors": "Paint - Second Coat",
+        "resource_list": "Wall Finishes Crew",
+        "package_sequence": 5,
+        "start_date": "2026-05-15",
+        "finish_date": "2026-05-16"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Raised Floor - Installation",
+        "duration_days": 3,
+        "predecessors": "Ceramic Tiles - Grouting",
+        "resource_list": "Flooring Crew",
+        "package_sequence": 4,
+        "start_date": "2026-05-17",
+        "finish_date": "2026-05-19"
       },
       {
         "wbs": "Closeout / Testing & Commissioning",
@@ -1065,9 +1065,9 @@
         "duration_days": 5,
         "predecessors": "Doors - Shutter Hanging, Joinery - Installation, Ceiling - Paint Final Coat, Raised Floor - Installation, Paint - Final Coat, FCU - Final Installation, Fire Alarm - Control Panel Installation, Branding - Accessories Fixing, Landlord Signoff - Final Walkthrough",
         "resource_list": "Project Team",
-        "start_date": "2026-05-01",
-        "finish_date": "2026-05-05",
-        "package_sequence": 99
+        "package_sequence": 99,
+        "start_date": "2026-05-20",
+        "finish_date": "2026-05-24"
       }
     ],
     "events": []
@@ -1081,7 +1081,7 @@
   "project_summary": {
     "total_duration_days": 108,
     "delay_events": 0,
-    "last_action": "Dashboard initialized",
+    "last_action": "Recalculated schedule with predecessor-based dates",
     "primavera_rows": 38
   }
 }
