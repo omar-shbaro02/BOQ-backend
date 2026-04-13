@@ -43,7 +43,7 @@ SPECIALIST_AGENTS = [
     {"id": "agent-3", "agent_name": "WBS_Extractor_03", "wbs_category": "Ceiling", "sequence": 3, "task": "Extract suspended ceilings, gypsum ceilings, acoustic systems, and ceiling paint into staged activities.", "keywords": ["ceiling", "suspended", "acoustic", "gypsum ceiling", "soffit"], "resource_list": "Ceiling Crew", "template_output": [{"WBS": "Ceiling", "Activity Name": "Ceiling - Framing"}, {"WBS": "Ceiling", "Activity Name": "Ceiling - Board Fixing"}, {"WBS": "Ceiling", "Activity Name": "Ceiling - Putty"}, {"WBS": "Ceiling", "Activity Name": "Ceiling - Paint Final Coat"}]},
     {"id": "agent-4", "agent_name": "WBS_Extractor_04", "wbs_category": "Floor Finishes", "sequence": 4, "task": "Extract flooring systems such as tile, stone, vinyl, carpet, and raised floor into preparation and installation activities.", "keywords": ["floor", "tile", "tiles", "carpet", "vinyl", "raised floor", "epoxy", "marble", "granite", "skirting"], "resource_list": "Flooring Crew", "template_output": [{"WBS": "Floor Finishes", "Activity Name": "Floor Finishes - Layout"}, {"WBS": "Floor Finishes", "Activity Name": "Ceramic Tiles - Setting"}, {"WBS": "Floor Finishes", "Activity Name": "Ceramic Tiles - Grouting"}, {"WBS": "Floor Finishes", "Activity Name": "Raised Floor - Installation"}]},
     {"id": "agent-5", "agent_name": "WBS_Extractor_05", "wbs_category": "Wall Finishes", "sequence": 5, "task": "Extract wall finishes such as paint, wall covering, cladding, and plastering into buildable steps.", "keywords": ["wall", "paint", "painting", "plaster", "putty", "wallpaper", "cladding", "render", "skim coat"], "resource_list": "Wall Finishes Crew", "template_output": [{"WBS": "Wall Finishes", "Activity Name": "Wall Finishes - Putty"}, {"WBS": "Wall Finishes", "Activity Name": "Paint - First Coat"}, {"WBS": "Wall Finishes", "Activity Name": "Paint - Second Coat"}, {"WBS": "Wall Finishes", "Activity Name": "Paint - Final Coat"}]},
-    {"id": "agent-6", "agent_name": "WBS_Extractor_06", "wbs_category": "HVAC", "sequence": 6, "task": "Extract ducting, air-side equipment, insulation, and diffusers into sequenced HVAC activities.", "keywords": ["hvac", "duct", "ducting", "ahu", "fcu", "vrf", "ventilation", "diffuser", "grille", "thermostat"], "resource_list": "HVAC Crew", "template_output": [{"WBS": "HVAC", "Activity Name": "Ducting - Fabrication"}, {"WBS": "HVAC", "Activity Name": "Ducting - First Fix"}, {"WBS": "HVAC", "Activity Name": "Ducting - Insulation"}, {"WBS": "HVAC", "Activity Name": "FCU - Final Installation"}]},
+    {"id": "agent-6", "agent_name": "WBS_Extractor_06", "wbs_category": "HVAC", "sequence": 6, "task": "Extract ducting, air-side equipment, insulation, and diffusers into sequenced HVAC activities.", "keywords": ["hvac", "duct", "ducting", "ahu", "fcu", "vrf", "ventilation", "diffuser", "grille", "grill", "thermostat", "air conditioning", "air-conditioning", "exhaust", "fresh air", "return air", "supply air", "chilled water", "fcu", "ac unit"], "resource_list": "HVAC Crew", "template_output": [{"WBS": "HVAC", "Activity Name": "Ducting - Fabrication"}, {"WBS": "HVAC", "Activity Name": "Ducting - First Fix"}, {"WBS": "HVAC", "Activity Name": "Ducting - Insulation"}, {"WBS": "HVAC", "Activity Name": "FCU - Final Installation"}]},
     {"id": "agent-7", "agent_name": "WBS_Extractor_07", "wbs_category": "Electrical", "sequence": 7, "task": "Extract power, lighting, fire alarm, data, and small power systems into first-fix and second-fix activities.", "keywords": ["electrical", "lighting", "light", "power", "socket", "switch", "fire alarm", "data", "cable", "conduit", "panel"], "resource_list": "Electrical Crew", "template_output": [{"WBS": "Electrical", "Activity Name": "Lighting - Conduit First Fix"}, {"WBS": "Electrical", "Activity Name": "Lighting - Wiring First Fix"}, {"WBS": "Electrical", "Activity Name": "Power - Socket Installation"}, {"WBS": "Electrical", "Activity Name": "Fire Alarm - Control Panel Installation"}]},
     {"id": "agent-8", "agent_name": "WBS_Extractor_08", "wbs_category": "Miscellaneous", "sequence": 8, "task": "Extract waterproofing, testing, signage, specialties, and close coordination items into actionable activities.", "keywords": ["waterproof", "signage", "testing", "specialty", "accessory", "toilet accessory", "mirror", "handrail", "membrane"], "resource_list": "Specialties Crew", "template_output": [{"WBS": "Miscellaneous", "Activity Name": "Waterproofing - Membrane Installation"}, {"WBS": "Miscellaneous", "Activity Name": "Signage - Installation"}, {"WBS": "Miscellaneous", "Activity Name": "Testing - Plumbing Leak Check"}, {"WBS": "Miscellaneous", "Activity Name": "Branding - Accessories Fixing"}]},
     {"id": "agent-9", "agent_name": "WBS_Extractor_09", "wbs_category": "Outdoor Areas", "sequence": 9, "task": "Extract external works, landlord interfaces, approvals, and site access scope into schedulable activities.", "keywords": ["outdoor", "external", "paving", "landlord", "approval", "permit", "facade", "sitework", "landscape", "access"], "resource_list": "External Works Crew", "template_output": [{"WBS": "Outdoor Areas", "Activity Name": "Landlord Approval - Shop Drawings"}, {"WBS": "Outdoor Areas", "Activity Name": "External Paving - Installation"}, {"WBS": "Outdoor Areas", "Activity Name": "Access Coordination - Permit Clearance"}, {"WBS": "Outdoor Areas", "Activity Name": "Landlord Signoff - Final Walkthrough"}]},
@@ -345,6 +345,30 @@ def normalize_specialist_activities(value: Any, agent: dict[str, Any]) -> list[d
     return normalized
 
 
+def score_row_for_agent(agent: dict[str, Any], row: dict[str, Any]) -> int:
+    description = normalize_text(row.get("description")).lower()
+    if not description:
+        return 0
+    return sum(1 for keyword in agent["keywords"] if keyword in description)
+
+
+def select_boq_rows_for_agent(agent: dict[str, Any], boq_rows: list[dict[str, Any]], limit: int = 60) -> list[dict[str, Any]]:
+    scored: list[tuple[int, int, dict[str, Any]]] = []
+    for index, row in enumerate(boq_rows):
+        score = score_row_for_agent(agent, row)
+        assigned_agent = choose_agent_for_row(row.get("description", ""))
+        if assigned_agent and assigned_agent["id"] == agent["id"]:
+            score += 3
+        if score > 0:
+            scored.append((score, index, row))
+
+    if scored:
+        scored.sort(key=lambda item: (-item[0], item[1]))
+        return [row for _, _, row in scored[:limit]]
+
+    return boq_rows[:limit]
+
+
 def normalize_project_manager_schedule(value: Any, fallback_schedule: list[dict[str, Any]], events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     payload = value
     if isinstance(payload, BaseModel):
@@ -394,10 +418,12 @@ def normalize_project_manager_schedule(value: Any, fallback_schedule: list[dict[
 def build_specialist_sdk_agent(agent_config: dict[str, Any]) -> Any:
     return (
         f"You are {agent_config['agent_name']} for the {agent_config['wbs_category']} WBS category. "
+        f"You only work on {agent_config['wbs_category']} scope and must extract activities strictly for that trade. "
         "Return only valid JSON matching this shape: "
         '{"activities":[{"WBS":"string","Activity Name":"string"}]}. '
         "Ignore zero-quantity items, duplicates, vague notes, and non-work rows. "
         f"Every returned row must use WBS exactly equal to '{agent_config['wbs_category']}'. "
+        "When relevant BOQ rows are present, convert them into concise construction activities rather than returning an empty list. "
         "Do not include markdown, code fences, or commentary."
     )
 
@@ -416,7 +442,7 @@ def run_specialist_sdk(agent_config: dict[str, Any], boq_rows: list[dict[str, An
     if not sdk_runtime_status()["enabled"]:
         return None
     client = get_openai_client()
-    boq_excerpt = boq_rows[:60]
+    boq_excerpt = select_boq_rows_for_agent(agent_config, boq_rows, limit=60)
     prompt = json.dumps(
         {
             "agent_name": agent_config["agent_name"],
@@ -427,6 +453,7 @@ def run_specialist_sdk(agent_config: dict[str, Any], boq_rows: list[dict[str, An
                 "Use only columns WBS and Activity Name.",
                 "Use WBS exactly matching the assigned category.",
                 "Ignore zero-quantity, duplicate, note-only, or vague items.",
+                "If the provided rows contain relevant scope for this category, return at least one activity.",
             ],
             "boq_rows": boq_excerpt,
         },

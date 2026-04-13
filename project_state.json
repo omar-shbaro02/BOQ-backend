@@ -369,7 +369,17 @@
         "ventilation",
         "diffuser",
         "grille",
-        "thermostat"
+        "grill",
+        "thermostat",
+        "air conditioning",
+        "air-conditioning",
+        "exhaust",
+        "fresh air",
+        "return air",
+        "supply air",
+        "chilled water",
+        "fcu",
+        "ac unit"
       ],
       "resource_list": "HVAC Crew",
       "template_output": [
@@ -657,7 +667,7 @@
     "status": "failed",
     "last_run": null,
     "export_file": "primavera_schedule_import.xlsx",
-    "export_updated_at": "2026-04-13T16:25:02",
+    "export_updated_at": "2026-04-13T16:39:50",
     "sdk": {
       "provider": "openai",
       "framework": "openai-python",
