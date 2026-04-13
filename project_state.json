@@ -36,7 +36,7 @@
           "Activity Name": "Doors - Shutter Hanging"
         }
       ],
-      "status": "ready",
+      "status": "queued",
       "boq_matches": 0,
       "latest_output": [
         {
@@ -108,7 +108,7 @@
           "Activity Name": "Joinery - Installation"
         }
       ],
-      "status": "ready",
+      "status": "queued",
       "boq_matches": 0,
       "latest_output": [
         {
@@ -175,7 +175,7 @@
           "Activity Name": "Ceiling - Paint Final Coat"
         }
       ],
-      "status": "ready",
+      "status": "queued",
       "boq_matches": 0,
       "latest_output": [
         {
@@ -247,7 +247,7 @@
           "Activity Name": "Raised Floor - Installation"
         }
       ],
-      "status": "ready",
+      "status": "queued",
       "boq_matches": 0,
       "latest_output": [
         {
@@ -318,7 +318,7 @@
           "Activity Name": "Paint - Final Coat"
         }
       ],
-      "status": "ready",
+      "status": "queued",
       "boq_matches": 0,
       "latest_output": [
         {
@@ -390,7 +390,7 @@
           "Activity Name": "FCU - Final Installation"
         }
       ],
-      "status": "ready",
+      "status": "queued",
       "boq_matches": 0,
       "latest_output": [
         {
@@ -463,7 +463,7 @@
           "Activity Name": "Fire Alarm - Control Panel Installation"
         }
       ],
-      "status": "ready",
+      "status": "queued",
       "boq_matches": 0,
       "latest_output": [
         {
@@ -534,7 +534,7 @@
           "Activity Name": "Branding - Accessories Fixing"
         }
       ],
-      "status": "ready",
+      "status": "queued",
       "boq_matches": 0,
       "latest_output": [
         {
@@ -606,7 +606,7 @@
           "Activity Name": "Landlord Signoff - Final Walkthrough"
         }
       ],
-      "status": "ready",
+      "status": "queued",
       "boq_matches": 0,
       "latest_output": [
         {
@@ -654,10 +654,10 @@
       "Build concurrent package schedule",
       "Generate Primavera TASK/TASKPRED workbook"
     ],
-    "status": "ready",
+    "status": "failed",
     "last_run": null,
     "export_file": "primavera_schedule_import.xlsx",
-    "export_updated_at": "2026-04-13T16:02:17",
+    "export_updated_at": "2026-04-13T16:25:02",
     "sdk": {
       "provider": "openai",
       "framework": "openai-python",
@@ -673,7 +673,7 @@
     "json_schema_endpoint": "/api/agents/schemas"
   },
   "workflow": {
-    "status": "idle",
+    "status": "failed",
     "last_run": null,
     "mode": "parallel-specialists-then-project-manager"
   },
@@ -1076,6 +1076,10 @@
     {
       "role": "assistant",
       "content": "Upload a BOQ workbook, then run the workflow to launch all specialist agents together and generate the Primavera export."
+    },
+    {
+      "role": "assistant",
+      "content": "Upload a BOQ workbook before running the workflow."
     }
   ],
   "project_summary": {

@@ -1099,6 +1099,7 @@ def handle_chat(state: dict[str, Any], message: str) -> str:
 app = FastAPI(title='BOQ Agent Console API')
 app.add_middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'], allow_headers=['*'])
 STATE = load_state()
+WORKFLOW_TASK: asyncio.Task | None = None
 
 
 @app.api_route('/health', methods=['GET', 'HEAD'])
@@ -1149,18 +1150,38 @@ def run_agent(agent_id: str) -> dict[str, Any]:
 
 @app.post('/api/workflow/run')
 async def run_workflow() -> dict[str, Any]:
-    result = await run_full_workflow_logic(STATE)
-    append_chat(STATE, 'assistant', result)
+    global WORKFLOW_TASK
+    if WORKFLOW_TASK and not WORKFLOW_TASK.done():
+        return STATE
+    STATE["workflow"]["status"] = "running"
+    STATE["planner"]["status"] = "waiting"
+    for agent in STATE["agents"]:
+        if agent.get("status") != "completed":
+            agent["status"] = "queued"
     save_state(STATE)
+
+    async def _run() -> None:
+        try:
+            result = await run_full_workflow_logic(STATE)
+            append_chat(STATE, "assistant", result)
+        except HTTPException as exc:
+            STATE["workflow"]["status"] = "failed"
+            STATE["planner"]["status"] = "failed"
+            append_chat(STATE, "assistant", str(exc.detail))
+        except Exception as exc:
+            STATE["workflow"]["status"] = "failed"
+            STATE["planner"]["status"] = "failed"
+            append_chat(STATE, "assistant", f"Workflow failed: {exc}")
+        finally:
+            save_state(STATE)
+
+    WORKFLOW_TASK = asyncio.create_task(_run())
     return STATE
 
 
 @app.post("/api/agents/run-all")
 async def run_all_agents() -> dict[str, Any]:
-    result = await run_full_workflow_logic(STATE)
-    append_chat(STATE, "assistant", result)
-    save_state(STATE)
-    return STATE
+    return await run_workflow()
 
 
 @app.post('/api/boq/upload')
