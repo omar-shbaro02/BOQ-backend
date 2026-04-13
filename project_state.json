@@ -667,7 +667,7 @@
     "status": "failed",
     "last_run": null,
     "export_file": "primavera_schedule_import.xlsx",
-    "export_updated_at": "2026-04-13T16:39:50",
+    "export_updated_at": "2026-04-13T16:52:51",
     "sdk": {
       "provider": "openai",
       "framework": "openai-python",

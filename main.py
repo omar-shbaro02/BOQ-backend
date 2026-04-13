@@ -896,8 +896,12 @@ def build_schedule(agents: list[dict[str, Any]], events: list[dict[str, Any]]) -
     return compute_schedule_dates(schedule, events, mobilization_start)
 
 
-def excel_serial(date_string: str) -> int:
-    return (datetime.strptime(date_string, '%Y-%m-%d').date() - date(1899, 12, 30)).days
+def format_primavera_datetime(date_string: str, *, end_of_day: bool = False) -> str:
+    base_date = datetime.strptime(date_string, '%Y-%m-%d')
+    hour = 17 if end_of_day else 8
+    minute = 0
+    formatted = base_date.replace(hour=hour, minute=minute)
+    return f"{formatted.month}/{formatted.day}/{formatted.year} {formatted:%H:%M}"
 
 
 def task_code(index: int) -> str:
@@ -914,14 +918,14 @@ def build_primavera_rows(schedule: list[dict[str, Any]]) -> dict[str, list[list[
     relationship_rows: list[list[Any]] = [['pred_task_id', 'task_id', 'pred_type', 'PREDTASK__status_code', 'TASK__status_code', 'pred_proj_id', 'proj_id', 'PREDTASK__PROJWBS__wbs_full_name', 'TASK__PROJWBS__wbs_full_name', 'PREDTASK__task_name', 'TASK__task_name', 'lag_hr_cnt', 'PREDTASK__rsrc_id', 'TASK__rsrc_id', 'delete_record_flag'], ['Predecessor', 'Successor', 'Relationship Type', '(*)Predecessor Activity Status', '(*)Successor Activity Status', '(*)Predecessor Project', '(*)Successor Project', '(*)Predecessor WBS', '(*)Successor WBS', '(*)Predecessor Activity Name', '(*)Successor Activity Name', 'Lag(h)', '(*)Predecessor Primary Resource', '(*)Successor Primary Resource', 'Delete This Row']]
     activity_lookup = {item['activity_name']: item for item in schedule}
     for item in schedule:
-        task_rows.append([activity_ids[item['activity_name']], 'Not Started', build_wbs_code(item['wbs']), item['activity_name'], excel_serial(item['start_date']), excel_serial(item['finish_date']), item.get('resource_list', ''), ''])
+        task_rows.append([activity_ids[item['activity_name']], 'Not Started', build_wbs_code(item['wbs']), item['activity_name'], format_primavera_datetime(item['start_date']), format_primavera_datetime(item['finish_date'], end_of_day=True), item.get('resource_list', ''), ''])
         predecessors = [part.strip() for part in item['predecessors'].split(',') if part.strip() and part.strip() != 'Project Start']
         for predecessor_name in predecessors:
             predecessor_item = activity_lookup.get(predecessor_name)
             if not predecessor_item:
                 continue
             relationship_rows.append([activity_ids[predecessor_name], activity_ids[item['activity_name']], 'FS', 'Not Started', 'Not Started', PRIMAVERA_PROJECT_ID, PRIMAVERA_PROJECT_ID, f"{build_wbs_code(predecessor_item['wbs'])} {predecessor_item['wbs']}", f"{build_wbs_code(item['wbs'])} {item['wbs']}", predecessor_name, item['activity_name'], 0, predecessor_item.get('resource_list', ''), item.get('resource_list', ''), ''])
-    userdata_rows = [['user_data'], ['UserSettings Do Not Edit'], ['DurationQtyType=QT_Hour\nShowAsPercentage=0\nSmallScaleQtyType=QT_Hour\nDateFormat=m/d/yyyy\nCurrencyFormat=US Dollar\n']]
+    userdata_rows = [['user_data'], ['UserSettings Do Not Edit'], ['DurationQtyType=QT_Hour\nShowAsPercentage=0\nSmallScaleQtyType=QT_Hour\nDateFormat=m/d/yyyy HH:mm\nCurrencyFormat=US Dollar\n']]
     return {'TASK': task_rows, 'TASKPRED': relationship_rows, 'USERDATA': userdata_rows}
 
 
