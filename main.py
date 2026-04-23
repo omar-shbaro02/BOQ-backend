@@ -30,7 +30,7 @@ APP_DIR = Path(__file__).resolve().parent
 STATE_FILE = APP_DIR / "project_state.json"
 EXPORT_DIR = APP_DIR / "exports"
 UPLOAD_DIR = APP_DIR / "uploads"
-PRIMAVERA_EXPORT_FILE = EXPORT_DIR / "primavera_schedule_import.xlsx"
+MS_PROJECT_EXPORT_FILE = EXPORT_DIR / "ms_project_schedule_import.xlsx"
 TODAY = date.today()
 PRIMAVERA_PROJECT_ID = "BOQIMPORT"
 PRIMAVERA_HOURS_PER_DAY = 8
@@ -49,7 +49,7 @@ SPECIALIST_AGENTS = [
     {"id": "agent-9", "agent_name": "WBS_Extractor_09", "wbs_category": "Outdoor Areas", "sequence": 9, "task": "Extract external works, landlord interfaces, approvals, and site access scope into schedulable activities.", "keywords": ["outdoor", "external", "paving", "landlord", "approval", "permit", "facade", "sitework", "landscape", "access"], "resource_list": "External Works Crew", "template_output": [{"WBS": "Outdoor Areas", "Activity Name": "Landlord Approval - Shop Drawings"}, {"WBS": "Outdoor Areas", "Activity Name": "External Paving - Installation"}, {"WBS": "Outdoor Areas", "Activity Name": "Access Coordination - Permit Clearance"}, {"WBS": "Outdoor Areas", "Activity Name": "Landlord Signoff - Final Walkthrough"}]},
 ]
 
-PLANNER_AGENT = {"id": "agent-10", "name": "Project Manager Agent", "role": "PMP construction planner", "goal": "Collect the specialist agent outputs, sequence package activities, and generate a Primavera import workbook that follows the uploaded sample structure.", "flow": ["Read uploaded BOQ", "Run specialist extractors in parallel", "Normalize package activities", "Build concurrent package schedule", "Generate Primavera TASK/TASKPRED workbook"]}
+PLANNER_AGENT = {"id": "agent-10", "name": "Project Manager Agent", "role": "PMP construction planner", "goal": "Collect the specialist agent outputs, sequence package activities, and generate a Microsoft Project import workbook that follows the uploaded sample structure.", "flow": ["Read uploaded BOQ", "Run specialist extractors in parallel", "Normalize package activities", "Build concurrent package schedule", "Generate Microsoft Project import workbook"]}
 
 DURATION_RULES = {"Doors and Partitions": [2, 4, 3, 2], "Wood Works": [2, 5, 3, 3], "Ceiling": [3, 3, 2, 2], "Floor Finishes": [2, 4, 2, 3], "Wall Finishes": [2, 2, 2, 2], "HVAC": [4, 5, 3, 3], "Electrical": [3, 4, 3, 2], "Miscellaneous": [2, 2, 2, 2], "Outdoor Areas": [2, 4, 2, 2]}
 PACKAGE_WBS_CODES = {"Preliminaries": "BOQIMPORT.PRELIM", "Doors and Partitions": "BOQIMPORT.ARCH.DoorsPartitions", "Wood Works": "BOQIMPORT.ARCH.WoodWorks", "Ceiling": "BOQIMPORT.ARCH.Ceiling", "Floor Finishes": "BOQIMPORT.ARCH.FloorFinishes", "Wall Finishes": "BOQIMPORT.ARCH.WallFinishes", "HVAC": "BOQIMPORT.MEP.HVAC", "Electrical": "BOQIMPORT.MEP.Electrical", "Miscellaneous": "BOQIMPORT.Specialties", "Outdoor Areas": "BOQIMPORT.External", "Closeout / Testing & Commissioning": "BOQIMPORT.Closeout"}
@@ -88,7 +88,7 @@ class ScheduleActivityOutput(BaseModel):
 
 class ProjectManagerAgentOutput(BaseModel):
     schedule: list[ScheduleActivityOutput]
-    primavera_import_notes: list[str] = Field(default_factory=list)
+    ms_project_import_notes: list[str] = Field(default_factory=list)
 
 
 def seed_state() -> dict[str, Any]:
@@ -101,7 +101,7 @@ def seed_state() -> dict[str, Any]:
         agent_state["last_run"] = None
         agents.append(agent_state)
     schedule = build_schedule(agents, [])
-    state = {"agents": agents, "planner": {**deepcopy(PLANNER_AGENT), "status": "ready", "last_run": None, "export_file": PRIMAVERA_EXPORT_FILE.name, "export_updated_at": None}, "workflow": {"status": "idle", "last_run": None, "mode": "parallel-specialists-then-project-manager"}, "boq_upload": {"filename": None, "stored_path": None, "uploaded_at": None, "status": "No BOQ uploaded yet", "row_count": 0, "detected_sheet": None}, "timeline": {"start_date": TODAY.isoformat(), "finish_date": schedule[-1]["finish_date"], "schedule": schedule, "events": []}, "chat_history": [{"role": "assistant", "content": "Upload a BOQ workbook, then run the workflow to launch all specialist agents together and generate the Primavera export."}], "project_summary": {"total_duration_days": sum(item["duration_days"] for item in schedule), "delay_events": 0, "last_action": "Dashboard initialized", "primavera_rows": len(schedule)}}
+    state = {"agents": agents, "planner": {**deepcopy(PLANNER_AGENT), "status": "ready", "last_run": None, "export_file": MS_PROJECT_EXPORT_FILE.name, "export_updated_at": None}, "workflow": {"status": "idle", "last_run": None, "mode": "parallel-specialists-then-project-manager"}, "boq_upload": {"filename": None, "stored_path": None, "uploaded_at": None, "status": "No BOQ uploaded yet", "row_count": 0, "detected_sheet": None}, "timeline": {"start_date": TODAY.isoformat(), "finish_date": schedule[-1]["finish_date"], "schedule": schedule, "events": []}, "chat_history": [{"role": "assistant", "content": "Upload a BOQ workbook, then run the workflow to launch all specialist agents together and generate the Microsoft Project export."}], "project_summary": {"total_duration_days": sum(item["duration_days"] for item in schedule), "delay_events": 0, "last_action": "Dashboard initialized", "export_rows": len(schedule)}}
     attach_agent_contracts(state)
     return state
 
@@ -133,7 +133,7 @@ def load_state() -> dict[str, Any]:
     state["planner"]["flow"] = deepcopy(PLANNER_AGENT["flow"])
     state["planner"].setdefault("status", "ready")
     state["planner"].setdefault("last_run", None)
-    state["planner"]["export_file"] = PRIMAVERA_EXPORT_FILE.name
+    state["planner"]["export_file"] = MS_PROJECT_EXPORT_FILE.name
     state["planner"].setdefault("export_updated_at", None)
     state.setdefault("workflow", seeded["workflow"])
     state["workflow"].setdefault("status", "idle")
@@ -154,7 +154,7 @@ def load_state() -> dict[str, Any]:
 
 def save_state(state: dict[str, Any]) -> None:
     recalculate_timeline(state, state["project_summary"].get("last_action", "State saved"))
-    refresh_primavera_export(state)
+    refresh_ms_project_export(state)
     attach_agent_contracts(state)
     STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
 
@@ -430,9 +430,9 @@ def build_specialist_sdk_agent(agent_config: dict[str, Any]) -> Any:
 
 def build_project_manager_sdk_agent() -> Any:
     return (
-        "You are the Project Manager Agent. Combine specialist JSON outputs into a Primavera-ready schedule. "
+        "You are the Project Manager Agent. Combine specialist JSON outputs into a Microsoft Project-ready schedule. "
         "Return only valid JSON matching this shape: "
-        '{"schedule":[{"wbs":"string","activity_name":"string","duration_days":1,"predecessors":"string","start_date":"YYYY-MM-DD","finish_date":"YYYY-MM-DD"}],"primavera_import_notes":["string"]}. '
+        '{"schedule":[{"wbs":"string","activity_name":"string","duration_days":1,"predecessors":"string","start_date":"YYYY-MM-DD","finish_date":"YYYY-MM-DD"}],"ms_project_import_notes":["string"]}. '
         "Use short planner-safe activity names, ISO dates, numeric duration_days, and natural-language predecessors. "
         "Do not include markdown, headings, prose, or code fences."
     )
@@ -912,31 +912,47 @@ def build_wbs_code(wbs_name: str) -> str:
     return PACKAGE_WBS_CODES.get(wbs_name, f"{PRIMAVERA_PROJECT_ID}.{re.sub(r'[^A-Za-z0-9]+', '', wbs_name)[:20]}")
 
 
-def build_primavera_rows(schedule: list[dict[str, Any]]) -> dict[str, list[list[Any]]]:
-    activity_ids = {item['activity_name']: task_code(index) for index, item in enumerate(schedule, start=1)}
-    task_rows: list[list[Any]] = [['task_code', 'status_code', 'wbs_id', 'task_name', 'start_date', 'end_date', 'resource_list', 'delete_record_flag'], ['Activity ID', 'Activity Status', 'WBS Code', 'Activity Name', '(*)Start', '(*)Finish', '(*)Resources', 'Delete This Row']]
-    relationship_rows: list[list[Any]] = [['pred_task_id', 'task_id', 'pred_type', 'PREDTASK__status_code', 'TASK__status_code', 'pred_proj_id', 'proj_id', 'PREDTASK__PROJWBS__wbs_full_name', 'TASK__PROJWBS__wbs_full_name', 'PREDTASK__task_name', 'TASK__task_name', 'lag_hr_cnt', 'PREDTASK__rsrc_id', 'TASK__rsrc_id', 'delete_record_flag'], ['Predecessor', 'Successor', 'Relationship Type', '(*)Predecessor Activity Status', '(*)Successor Activity Status', '(*)Predecessor Project', '(*)Successor Project', '(*)Predecessor WBS', '(*)Successor WBS', '(*)Predecessor Activity Name', '(*)Successor Activity Name', 'Lag(h)', '(*)Predecessor Primary Resource', '(*)Successor Primary Resource', 'Delete This Row']]
-    activity_lookup = {item['activity_name']: item for item in schedule}
+def format_ms_project_datetime(date_string: str, *, end_of_day: bool = False) -> str:
+    base_date = datetime.strptime(date_string, '%Y-%m-%d')
+    hour = 14 if end_of_day else 9
+    formatted = base_date.replace(hour=hour, minute=0)
+    return formatted.strftime('%B %d, %Y %I:%M %p').replace(' 0', ' ')
+
+
+def format_ms_project_duration(duration_days: int) -> str:
+    value = float(max(0, duration_days))
+    return f"{int(value)} days" if value.is_integer() else f"{value:g} days"
+
+
+def build_ms_project_rows(schedule: list[dict[str, Any]]) -> dict[str, list[list[Any]]]:
+    activity_ids = {item['activity_name']: index for index, item in enumerate(schedule, start=1)}
+    task_rows: list[list[Any]] = [['ID', 'Name', 'Duration', 'Start', 'Finish', 'Dependency']]
     for item in schedule:
-        task_rows.append([activity_ids[item['activity_name']], 'Not Started', build_wbs_code(item['wbs']), item['activity_name'], format_primavera_datetime(item['start_date']), format_primavera_datetime(item['finish_date'], end_of_day=True), item.get('resource_list', ''), ''])
-        predecessors = [part.strip() for part in item['predecessors'].split(',') if part.strip() and part.strip() != 'Project Start']
-        for predecessor_name in predecessors:
-            predecessor_item = activity_lookup.get(predecessor_name)
-            if not predecessor_item:
-                continue
-            relationship_rows.append([activity_ids[predecessor_name], activity_ids[item['activity_name']], 'FS', 'Not Started', 'Not Started', PRIMAVERA_PROJECT_ID, PRIMAVERA_PROJECT_ID, f"{build_wbs_code(predecessor_item['wbs'])} {predecessor_item['wbs']}", f"{build_wbs_code(item['wbs'])} {item['wbs']}", predecessor_name, item['activity_name'], 0, predecessor_item.get('resource_list', ''), item.get('resource_list', ''), ''])
-    userdata_rows = [['user_data'], ['UserSettings Do Not Edit'], ['DurationQtyType=QT_Hour\nShowAsPercentage=0\nSmallScaleQtyType=QT_Hour\nDateFormat=m/d/yyyy HH:mm\nCurrencyFormat=US Dollar\n']]
-    return {'TASK': task_rows, 'TASKPRED': relationship_rows, 'USERDATA': userdata_rows}
+        predecessor_ids = [
+            str(activity_ids[name])
+            for name in split_predecessors(item.get('predecessors', ''))
+            if name != 'Project Start' and name in activity_ids
+        ]
+        dependency = ','.join(predecessor_ids)
+        task_rows.append([
+            activity_ids[item['activity_name']],
+            item['activity_name'],
+            format_ms_project_duration(item['duration_days']),
+            format_ms_project_datetime(item['start_date']),
+            format_ms_project_datetime(item['finish_date'], end_of_day=True),
+            dependency,
+        ])
+    return {'Tasks': task_rows}
 
 
-def build_primavera_workbook(schedule: list[dict[str, Any]]) -> bytes:
-    return build_workbook(build_primavera_rows(schedule))
+def build_ms_project_workbook(schedule: list[dict[str, Any]]) -> bytes:
+    return build_workbook(build_ms_project_rows(schedule))
 
 
-def refresh_primavera_export(state: dict[str, Any]) -> None:
+def refresh_ms_project_export(state: dict[str, Any]) -> None:
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    PRIMAVERA_EXPORT_FILE.write_bytes(build_primavera_workbook(state['timeline']['schedule']))
-    state['planner']['export_file'] = PRIMAVERA_EXPORT_FILE.name
+    MS_PROJECT_EXPORT_FILE.write_bytes(build_ms_project_workbook(state['timeline']['schedule']))
+    state['planner']['export_file'] = MS_PROJECT_EXPORT_FILE.name
     state['planner']['export_updated_at'] = datetime.now().isoformat(timespec='seconds')
 
 
@@ -946,7 +962,7 @@ def recalculate_timeline(state: dict[str, Any], action: str) -> None:
     state['timeline']['schedule'] = schedule
     state['timeline']['start_date'] = min(item['start_date'] for item in schedule)
     state['timeline']['finish_date'] = max(item['finish_date'] for item in schedule)
-    state['project_summary'] = {'total_duration_days': sum(item['duration_days'] for item in schedule), 'delay_events': len(state['timeline']['events']), 'last_action': action, 'primavera_rows': len(schedule)}
+    state['project_summary'] = {'total_duration_days': sum(item['duration_days'] for item in schedule), 'delay_events': len(state['timeline']['events']), 'last_action': action, 'export_rows': len(schedule)}
 
 
 async def run_specialist_agent(agent: dict[str, Any], boq_rows: list[dict[str, Any]]) -> None:
@@ -1003,7 +1019,7 @@ async def run_full_workflow_logic(state: dict[str, Any]) -> str:
         raise HTTPException(status_code=502, detail="Project manager did not return valid OpenAI schedule output.")
     state['boq_upload']['row_count'] = len(boq_rows)
     state['boq_upload']['detected_sheet'] = detected_sheet
-    state['boq_upload']['status'] = 'BOQ parsed. All specialist agents completed, and the project manager prepared the Primavera import workbook.'
+    state['boq_upload']['status'] = 'BOQ parsed. All specialist agents completed, and the project manager prepared the Microsoft Project import workbook.'
     state['planner']['status'] = 'exported'
     state["planner"]["last_run_source"] = 'openai_chat_model' if sdk_schedule else 'local_fallback'
     state['planner']['last_run'] = datetime.now().isoformat(timespec='seconds')
@@ -1017,13 +1033,13 @@ async def run_full_workflow_logic(state: dict[str, Any]) -> str:
             "total_duration_days": sum(item["duration_days"] for item in sdk_schedule),
             "delay_events": len(state["timeline"]["events"]),
             "last_action": "Ran full BOQ workflow with parallel specialist agents",
-            "primavera_rows": len(sdk_schedule),
+            "export_rows": len(sdk_schedule),
         }
     else:
         recalculate_timeline(state, 'Ran full BOQ workflow with parallel specialist agents')
-    refresh_primavera_export(state)
+    refresh_ms_project_export(state)
     total_activities = sum(len(agent['latest_output']) for agent in state['agents'])
-    return f"Ran {len(state['agents'])} specialist agents in parallel from the uploaded BOQ, generated {total_activities} package activities, and refreshed {state['planner']['export_file']} for Primavera import."
+    return f"Ran {len(state['agents'])} specialist agents in parallel from the uploaded BOQ, generated {total_activities} package activities, and refreshed {state['planner']['export_file']} for Microsoft Project import."
 
 def run_agent_logic(state: dict[str, Any], agent_id: str) -> str:
     for agent in state['agents']:
@@ -1065,16 +1081,16 @@ def run_agent_logic(state: dict[str, Any], agent_id: str) -> str:
             state["project_summary"] = {
                 "total_duration_days": sum(item["duration_days"] for item in sdk_schedule),
                 "delay_events": len(state["timeline"]["events"]),
-                "last_action": "Project Manager Agent rebuilt the Primavera export",
-                "primavera_rows": len(sdk_schedule),
+                "last_action": "Project Manager Agent rebuilt the Microsoft Project export",
+                "export_rows": len(sdk_schedule),
             }
         else:
-            recalculate_timeline(state, 'Project Manager Agent rebuilt the Primavera export')
+            recalculate_timeline(state, 'Project Manager Agent rebuilt the Microsoft Project export')
         state['planner']['status'] = 'exported'
         state["planner"]["last_run_source"] = 'openai_chat_model' if sdk_schedule else 'local_fallback'
         state['planner']['last_run'] = datetime.now().isoformat(timespec='seconds')
-        refresh_primavera_export(state)
-        return f"{state['planner']['name']} rebuilt the Primavera workbook."
+        refresh_ms_project_export(state)
+        return f"{state['planner']['name']} rebuilt the Microsoft Project workbook."
     return 'Agent not found.'
 
 
@@ -1106,7 +1122,7 @@ def summarize_timeline(state: dict[str, Any]) -> str:
 
 def explain_agent(agent: dict[str, Any]) -> str:
     if agent.get('id') == PLANNER_AGENT['id']:
-        return f"{PLANNER_AGENT['name']} waits for all specialist agents to finish, then consolidates their outputs into the concurrent package schedule and formats the Primavera import workbook."
+        return f"{PLANNER_AGENT['name']} waits for all specialist agents to finish, then consolidates their outputs into the concurrent package schedule and formats the Microsoft Project import workbook."
     return f"{agent['wbs_category']} is handled by {agent['agent_name']}. It reads the uploaded BOQ rows assigned to that package and turns them into sequenced scheduler-ready activities. Latest output count: {len(agent['latest_output'])}."
 
 
@@ -1116,7 +1132,7 @@ def handle_chat(state: dict[str, Any], message: str) -> str:
     if any(phrase in lowered for phrase in ["couldn't work", 'could not work', 'missed today', 'delay', 'lost day', 'couldnt work']):
         return add_delay_event(state, message.strip(), parse_lost_days(message), TODAY.isoformat())
     if 'run workflow' in lowered or 'run all' in lowered:
-        return 'Use the Run Workflow button to launch all specialist agents together and refresh the Primavera workbook.'
+        return 'Use the Run Workflow button to launch all specialist agents together and refresh the Microsoft Project workbook.'
     if 'run' in lowered and agent:
         return run_agent_logic(state, agent['id'])
     if any(keyword in lowered for keyword in ['explain', 'what does', 'who is', 'agent']) and agent:
@@ -1167,7 +1183,7 @@ def get_agent_schemas() -> dict[str, Any]:
         ],
         "specialist_agent_output": schema_for(SpecialistAgentOutput),
         "project_manager_agent_output": schema_for(ProjectManagerAgentOutput),
-        "primavera_xlsx_sheets": build_primavera_rows(STATE["timeline"]["schedule"]),
+        "ms_project_xlsx_sheets": build_ms_project_rows(STATE["timeline"]["schedule"]),
     }
 
 
@@ -1247,10 +1263,16 @@ def get_timeline() -> dict[str, Any]:
     return STATE['timeline']
 
 
+@app.get('/api/exports/ms-project.xlsx')
+def download_ms_project_export() -> FileResponse:
+    refresh_ms_project_export(STATE)
+    return FileResponse(MS_PROJECT_EXPORT_FILE, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename='ms_project_schedule_import.xlsx')
+
+
 @app.get('/api/exports/primavera.xlsx')
-def download_primavera_export() -> FileResponse:
-    refresh_primavera_export(STATE)
-    return FileResponse(PRIMAVERA_EXPORT_FILE, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename='primavera_schedule_import.xlsx')
+def download_legacy_export_route() -> FileResponse:
+    refresh_ms_project_export(STATE)
+    return FileResponse(MS_PROJECT_EXPORT_FILE, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', filename='ms_project_schedule_import.xlsx')
 
 
 @app.post('/api/timeline/events')
