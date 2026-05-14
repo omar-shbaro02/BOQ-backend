@@ -36,6 +36,10 @@ PRIMAVERA_PROJECT_ID = "BOQIMPORT"
 PRIMAVERA_HOURS_PER_DAY = 8
 OPENAI_AGENT_MODEL = os.getenv("OPENAI_AGENT_MODEL", "gpt-4.1-mini")
 XML_NS = {"a": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
+MAX_ROWS_PER_SPECIALIST_PROMPT = 160
+MAX_LOCAL_ACTIVITIES_PER_AGENT = 300
+OPENAI_REQUEST_TIMEOUT_SECONDS = int(os.getenv("OPENAI_REQUEST_TIMEOUT_SECONDS", "90"))
+MIN_PARSED_PDF_ROWS = 5
 
 SPECIALIST_AGENTS = [
     {"id": "agent-1", "agent_name": "WBS_Extractor_01", "wbs_category": "Doors and Partitions", "sequence": 1, "task": "Extract BOQ scope for doors, glazing, drywall partitions, and metal partitions into scheduler-ready activities.", "keywords": ["door", "doors", "partition", "drywall", "gypsum partition", "glass partition", "ironmongery", "frame", "shutter"], "resource_list": "Doors Crew", "template_output": [{"WBS": "Doors and Partitions", "Activity Name": "Partitions - Marking"}, {"WBS": "Doors and Partitions", "Activity Name": "Partitions - Framing"}, {"WBS": "Doors and Partitions", "Activity Name": "Doors - Frame Installation"}, {"WBS": "Doors and Partitions", "Activity Name": "Doors - Shutter Hanging"}]},
@@ -47,12 +51,15 @@ SPECIALIST_AGENTS = [
     {"id": "agent-7", "agent_name": "WBS_Extractor_07", "wbs_category": "Electrical", "sequence": 7, "task": "Extract power, lighting, fire alarm, data, and small power systems into first-fix and second-fix activities.", "keywords": ["electrical", "lighting", "light", "power", "socket", "switch", "fire alarm", "data", "cable", "conduit", "panel"], "resource_list": "Electrical Crew", "template_output": [{"WBS": "Electrical", "Activity Name": "Lighting - Conduit First Fix"}, {"WBS": "Electrical", "Activity Name": "Lighting - Wiring First Fix"}, {"WBS": "Electrical", "Activity Name": "Power - Socket Installation"}, {"WBS": "Electrical", "Activity Name": "Fire Alarm - Control Panel Installation"}]},
     {"id": "agent-8", "agent_name": "WBS_Extractor_08", "wbs_category": "Miscellaneous", "sequence": 8, "task": "Extract waterproofing, testing, signage, specialties, and close coordination items into actionable activities.", "keywords": ["waterproof", "signage", "testing", "specialty", "accessory", "toilet accessory", "mirror", "handrail", "membrane"], "resource_list": "Specialties Crew", "template_output": [{"WBS": "Miscellaneous", "Activity Name": "Waterproofing - Membrane Installation"}, {"WBS": "Miscellaneous", "Activity Name": "Signage - Installation"}, {"WBS": "Miscellaneous", "Activity Name": "Testing - Plumbing Leak Check"}, {"WBS": "Miscellaneous", "Activity Name": "Branding - Accessories Fixing"}]},
     {"id": "agent-9", "agent_name": "WBS_Extractor_09", "wbs_category": "Outdoor Areas", "sequence": 9, "task": "Extract external works, landlord interfaces, approvals, and site access scope into schedulable activities.", "keywords": ["outdoor", "external", "paving", "landlord", "approval", "permit", "facade", "sitework", "landscape", "access"], "resource_list": "External Works Crew", "template_output": [{"WBS": "Outdoor Areas", "Activity Name": "Landlord Approval - Shop Drawings"}, {"WBS": "Outdoor Areas", "Activity Name": "External Paving - Installation"}, {"WBS": "Outdoor Areas", "Activity Name": "Access Coordination - Permit Clearance"}, {"WBS": "Outdoor Areas", "Activity Name": "Landlord Signoff - Final Walkthrough"}]},
+    {"id": "agent-10", "agent_name": "WBS_Extractor_10", "wbs_category": "Plumbing and Sanitary", "sequence": 10, "task": "Extract plumbing, drainage, sanitary fixtures, pumps, valves, and water supply systems into rough-in, installation, testing, and commissioning activities.", "keywords": ["plumbing", "sanitary", "drainage", "water supply", "pipe", "pipes", "piping", "valve", "pump", "wc", "wash basin", "basin", "sink", "mixer", "tap", "shower", "manhole", "sewer"], "resource_list": "Plumbing Crew", "template_output": [{"WBS": "Plumbing and Sanitary", "Activity Name": "Plumbing - First Fix Piping"}, {"WBS": "Plumbing and Sanitary", "Activity Name": "Plumbing - Fixture Installation"}, {"WBS": "Plumbing and Sanitary", "Activity Name": "Plumbing - Pressure Testing"}, {"WBS": "Plumbing and Sanitary", "Activity Name": "Plumbing - Final Commissioning"}]},
+    {"id": "agent-11", "agent_name": "WBS_Extractor_11", "wbs_category": "Fire Fighting", "sequence": 11, "task": "Extract fire fighting systems including sprinklers, hydrants, hose reels, extinguishers, and fire pumps into installation, testing, and authority-ready activities.", "keywords": ["fire fighting", "fire-fighting", "sprinkler", "hydrant", "hose reel", "fire hose", "extinguisher", "fire pump", "fire suppression"], "resource_list": "Fire Fighting Crew", "template_output": [{"WBS": "Fire Fighting", "Activity Name": "Fire Fighting - Pipe Network Installation"}, {"WBS": "Fire Fighting", "Activity Name": "Fire Fighting - Device Installation"}, {"WBS": "Fire Fighting", "Activity Name": "Fire Fighting - Hydrostatic Testing"}, {"WBS": "Fire Fighting", "Activity Name": "Fire Fighting - Authority Inspection"}]},
+    {"id": "agent-12", "agent_name": "WBS_Extractor_12", "wbs_category": "Civil and Masonry", "sequence": 12, "task": "Extract demolition, excavation, concrete, blockwork, plaster, screed, and masonry scope into staged civil construction activities.", "keywords": ["demolition", "excavation", "backfill", "concrete", "rebar", "reinforcement", "formwork", "block", "blockwork", "masonry", "plaster", "screed", "cement", "substrate"], "resource_list": "Civil Crew", "template_output": [{"WBS": "Civil and Masonry", "Activity Name": "Civil Works - Setting Out"}, {"WBS": "Civil and Masonry", "Activity Name": "Civil Works - Substrate Preparation"}, {"WBS": "Civil and Masonry", "Activity Name": "Civil Works - Execution"}, {"WBS": "Civil and Masonry", "Activity Name": "Civil Works - Inspection"}]},
 ]
 
-PLANNER_AGENT = {"id": "agent-10", "name": "Project Manager Agent", "role": "PMP construction planner", "goal": "Collect the specialist agent outputs, sequence package activities, and generate a Microsoft Project import workbook that follows the uploaded sample structure.", "flow": ["Read uploaded BOQ", "Run specialist extractors in parallel", "Normalize package activities", "Build concurrent package schedule", "Generate Microsoft Project import workbook"]}
+PLANNER_AGENT = {"id": "agent-99", "name": "Project Manager Agent", "role": "PMP construction planner", "goal": "Collect the specialist agent outputs, sequence package activities, and generate a Microsoft Project import workbook that follows the uploaded sample structure.", "flow": ["Read uploaded BOQ", "Run specialist extractors in parallel", "Normalize package activities", "Build concurrent package schedule", "Generate Microsoft Project import workbook"]}
 
-DURATION_RULES = {"Doors and Partitions": [2, 4, 3, 2], "Wood Works": [2, 5, 3, 3], "Ceiling": [3, 3, 2, 2], "Floor Finishes": [2, 4, 2, 3], "Wall Finishes": [2, 2, 2, 2], "HVAC": [4, 5, 3, 3], "Electrical": [3, 4, 3, 2], "Miscellaneous": [2, 2, 2, 2], "Outdoor Areas": [2, 4, 2, 2]}
-PACKAGE_WBS_CODES = {"Preliminaries": "BOQIMPORT.PRELIM", "Doors and Partitions": "BOQIMPORT.ARCH.DoorsPartitions", "Wood Works": "BOQIMPORT.ARCH.WoodWorks", "Ceiling": "BOQIMPORT.ARCH.Ceiling", "Floor Finishes": "BOQIMPORT.ARCH.FloorFinishes", "Wall Finishes": "BOQIMPORT.ARCH.WallFinishes", "HVAC": "BOQIMPORT.MEP.HVAC", "Electrical": "BOQIMPORT.MEP.Electrical", "Miscellaneous": "BOQIMPORT.Specialties", "Outdoor Areas": "BOQIMPORT.External", "Closeout / Testing & Commissioning": "BOQIMPORT.Closeout"}
+DURATION_RULES = {"Doors and Partitions": [2, 4, 3, 2], "Wood Works": [2, 5, 3, 3], "Ceiling": [3, 3, 2, 2], "Floor Finishes": [2, 4, 2, 3], "Wall Finishes": [2, 2, 2, 2], "HVAC": [4, 5, 3, 3], "Electrical": [3, 4, 3, 2], "Miscellaneous": [2, 2, 2, 2], "Outdoor Areas": [2, 4, 2, 2], "Plumbing and Sanitary": [3, 4, 2, 2], "Fire Fighting": [3, 3, 2, 2], "Civil and Masonry": [2, 4, 3, 2]}
+PACKAGE_WBS_CODES = {"Preliminaries": "BOQIMPORT.PRELIM", "Doors and Partitions": "BOQIMPORT.ARCH.DoorsPartitions", "Wood Works": "BOQIMPORT.ARCH.WoodWorks", "Ceiling": "BOQIMPORT.ARCH.Ceiling", "Floor Finishes": "BOQIMPORT.ARCH.FloorFinishes", "Wall Finishes": "BOQIMPORT.ARCH.WallFinishes", "HVAC": "BOQIMPORT.MEP.HVAC", "Electrical": "BOQIMPORT.MEP.Electrical", "Miscellaneous": "BOQIMPORT.Specialties", "Outdoor Areas": "BOQIMPORT.External", "Plumbing and Sanitary": "BOQIMPORT.MEP.PlumbingSanitary", "Fire Fighting": "BOQIMPORT.MEP.FireFighting", "Civil and Masonry": "BOQIMPORT.CivilMasonry", "Closeout / Testing & Commissioning": "BOQIMPORT.Closeout"}
 PACKAGE_DEPENDENCY_RULES = {
     "Ceiling": ["Doors and Partitions"],
     "Floor Finishes": ["Ceiling"],
@@ -71,6 +78,8 @@ class TimelineEventRequest(BaseModel):
 class SpecialistActivityOutput(BaseModel):
     wbs: str = Field(alias="WBS")
     activity_name: str = Field(alias="Activity Name")
+    source_quantity: float | None = None
+    source_description: str | None = None
 
 
 class SpecialistAgentOutput(BaseModel):
@@ -223,7 +232,7 @@ def get_openai_client() -> Any:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY is not set.")
-    return OpenAI(api_key=api_key)
+    return OpenAI(api_key=api_key, timeout=OPENAI_REQUEST_TIMEOUT_SECONDS)
 
 
 def extract_json_object(text: str) -> dict[str, Any]:
@@ -256,6 +265,7 @@ def extract_pdf_boq_rows_via_openai(path: Path) -> tuple[list[dict[str, Any]], s
         'Return only valid JSON shaped exactly like {"rows":[{"description":"string","quantity":1.0}]}. '
         "Keep each description concise but complete. "
         "Use null for quantity when it is not visible. "
+        "Extract every measurable work row; do not summarize or merge distinct BOQ rows. "
         "Ignore page headers, footers, signatures, totals, and narrative paragraphs."
     )
 
@@ -310,7 +320,7 @@ def extract_pdf_boq_rows_via_openai(path: Path) -> tuple[list[dict[str, Any]], s
     return parsed_rows, "PDF Upload"
 
 
-def normalize_specialist_activities(value: Any, agent: dict[str, Any]) -> list[dict[str, str]]:
+def normalize_specialist_activities(value: Any, agent: dict[str, Any]) -> list[dict[str, Any]]:
     payload = value
     if isinstance(payload, BaseModel):
         payload = pydantic_to_dict(payload, by_alias=True)
@@ -324,7 +334,7 @@ def normalize_specialist_activities(value: Any, agent: dict[str, Any]) -> list[d
     if not isinstance(payload, list):
         return []
 
-    normalized: list[dict[str, str]] = []
+    normalized: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
     for item in payload:
         if isinstance(item, BaseModel):
@@ -341,7 +351,20 @@ def normalize_specialist_activities(value: Any, agent: dict[str, Any]) -> list[d
         if key in seen:
             continue
         seen.add(key)
-        normalized.append({"WBS": wbs, "Activity Name": activity_name[:120]})
+        normalized_item = {"WBS": wbs, "Activity Name": activity_name[:120]}
+        quantity = item.get("source_quantity")
+        if quantity is None:
+            quantity = item.get("quantity")
+        try:
+            quantity_value = float(quantity) if quantity is not None else None
+        except (TypeError, ValueError):
+            quantity_value = None
+        if quantity_value is not None:
+            normalized_item["source_quantity"] = quantity_value
+        source_description = normalize_text(item.get("source_description") or item.get("description"))
+        if source_description:
+            normalized_item["source_description"] = source_description[:180]
+        normalized.append(normalized_item)
     return normalized
 
 
@@ -352,9 +375,11 @@ def score_row_for_agent(agent: dict[str, Any], row: dict[str, Any]) -> int:
     return sum(1 for keyword in agent["keywords"] if keyword in description)
 
 
-def select_boq_rows_for_agent(agent: dict[str, Any], boq_rows: list[dict[str, Any]], limit: int = 60) -> list[dict[str, Any]]:
+def select_boq_rows_for_agent(agent: dict[str, Any], boq_rows: list[dict[str, Any]], limit: int = MAX_ROWS_PER_SPECIALIST_PROMPT) -> list[dict[str, Any]]:
     scored: list[tuple[int, int, dict[str, Any]]] = []
     for index, row in enumerate(boq_rows):
+        if not is_valid_boq_row(row):
+            continue
         score = score_row_for_agent(agent, row)
         assigned_agent = choose_agent_for_row(row.get("description", ""))
         if assigned_agent and assigned_agent["id"] == agent["id"]:
@@ -366,7 +391,7 @@ def select_boq_rows_for_agent(agent: dict[str, Any], boq_rows: list[dict[str, An
         scored.sort(key=lambda item: (-item[0], item[1]))
         return [row for _, _, row in scored[:limit]]
 
-    return boq_rows[:limit]
+    return [row for row in boq_rows if is_valid_boq_row(row)][:limit]
 
 
 def normalize_project_manager_schedule(value: Any, fallback_schedule: list[dict[str, Any]], events: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -420,7 +445,7 @@ def build_specialist_sdk_agent(agent_config: dict[str, Any]) -> Any:
         f"You are {agent_config['agent_name']} for the {agent_config['wbs_category']} WBS category. "
         f"You only work on {agent_config['wbs_category']} scope and must extract activities strictly for that trade. "
         "Return only valid JSON matching this shape: "
-        '{"activities":[{"WBS":"string","Activity Name":"string"}]}. '
+        '{"activities":[{"WBS":"string","Activity Name":"string","source_quantity":1.0,"source_description":"string"}]}. '
         "Ignore zero-quantity items, duplicates, vague notes, and non-work rows. "
         f"Every returned row must use WBS exactly equal to '{agent_config['wbs_category']}'. "
         "When relevant BOQ rows are present, convert them into concise construction activities rather than returning an empty list. "
@@ -438,11 +463,11 @@ def build_project_manager_sdk_agent() -> Any:
     )
 
 
-def run_specialist_sdk(agent_config: dict[str, Any], boq_rows: list[dict[str, Any]]) -> list[dict[str, str]] | None:
+def run_specialist_sdk(agent_config: dict[str, Any], boq_rows: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
     if not sdk_runtime_status()["enabled"]:
         return None
     client = get_openai_client()
-    boq_excerpt = select_boq_rows_for_agent(agent_config, boq_rows, limit=60)
+    boq_excerpt = select_boq_rows_for_agent(agent_config, boq_rows)
     prompt = json.dumps(
         {
             "agent_name": agent_config["agent_name"],
@@ -450,10 +475,13 @@ def run_specialist_sdk(agent_config: dict[str, Any], boq_rows: list[dict[str, An
             "task": agent_config["task"],
             "output_rules": [
                 "Return only JSON.",
-                "Use only columns WBS and Activity Name.",
+                "Use WBS, Activity Name, source_quantity, and source_description when available.",
                 "Use WBS exactly matching the assigned category.",
                 "Ignore zero-quantity, duplicate, note-only, or vague items.",
                 "If the provided rows contain relevant scope for this category, return at least one activity.",
+                "Scale the output with the input: larger packages must produce more activities, not fewer.",
+                "Do not summarize many distinct BOQ rows into one generic activity when they represent separate scopes.",
+                "Carry source_quantity from the BOQ row into each derived activity so durations can scale.",
             ],
             "boq_rows": boq_excerpt,
         },
@@ -582,6 +610,33 @@ def is_meaningful_quantity(value: float | None) -> bool:
     return value is not None and 0 < value < 100000
 
 
+def is_readable_pdf_text(text: str) -> bool:
+    if len(text) < 200:
+        return False
+    printable = sum(1 for char in text if char.isprintable() or char in "\r\n\t")
+    letters = sum(1 for char in text if char.isalpha())
+    asciiish = sum(1 for char in text if char in "\r\n\t" or 32 <= ord(char) <= 126)
+    return printable / max(len(text), 1) > 0.85 and letters >= 80 and asciiish / max(len(text), 1) > 0.55
+
+
+def is_valid_boq_row(row: dict[str, Any]) -> bool:
+    description = normalize_text(row.get("description"))
+    if len(description) < 4 or not re.search(r"[A-Za-z]", description):
+        return False
+    lowered = description.lower()
+    if lowered in {"description", "item", "qty", "quantity", "unit", "rate", "amount"}:
+        return False
+    if any(phrase in lowered for phrase in ["total amount", "grand total", "subtotal", "page ", "signature"]):
+        return False
+    quantity = row.get("quantity")
+    try:
+        if quantity is not None and float(quantity) <= 0:
+            return False
+    except (TypeError, ValueError):
+        pass
+    return True
+
+
 def decode_pdf_literal(text: str) -> str:
     out: list[str] = []
     index = 0
@@ -638,7 +693,8 @@ def extract_pdf_text(file_bytes: bytes) -> str:
             if strings:
                 text_blocks.append("\n".join(strings))
 
-    text = normalize_text("\n".join(text_blocks).replace("\r", "\n"))
+    text = "\n".join(normalize_text(line) for line in "\n".join(text_blocks).replace("\r", "\n").splitlines())
+    text = "\n".join(line for line in text.splitlines() if line)
     if text:
         return text
 
@@ -647,13 +703,13 @@ def extract_pdf_text(file_bytes: bytes) -> str:
         for item in re.findall(rb"\((?:\\.|[^\\()])*\)", file_bytes)
         if normalize_text(item.decode("latin-1", errors="ignore"))
     ]
-    return "\n".join(fallback_strings)
+    return "\n".join(item for item in fallback_strings if item)
 
 
 def load_pdf_rows(path: Path) -> tuple[list[dict[str, Any]], str | None]:
     text = extract_pdf_text(path.read_bytes())
-    if not text:
-        raise ValueError("Could not extract readable text from the PDF BOQ.")
+    if not text or not is_readable_pdf_text(text):
+        raise ValueError("Could not extract reliable readable text from the PDF BOQ.")
 
     parsed_rows: list[dict[str, Any]] = []
     for raw_line in text.splitlines():
@@ -662,16 +718,18 @@ def load_pdf_rows(path: Path) -> tuple[list[dict[str, Any]], str | None]:
             continue
         quantity_matches = re.findall(r"(?<!\w)(\d+(?:[.,]\d+)?)(?!\w)", line)
         quantity = next((parse_float(value) for value in reversed(quantity_matches) if is_meaningful_quantity(parse_float(value))), None)
-        parsed_rows.append(
+        row = (
             {
                 "cells": [segment for segment in re.split(r"\s{2,}|\t", line) if segment],
                 "description": line,
                 "quantity": quantity,
             }
         )
+        if is_valid_boq_row(row):
+            parsed_rows.append(row)
 
-    if not parsed_rows:
-        raise ValueError("The PDF BOQ did not produce any usable rows.")
+    if len(parsed_rows) < MIN_PARSED_PDF_ROWS:
+        raise ValueError("The PDF BOQ did not produce enough usable rows.")
     return parsed_rows, "PDF Upload"
 
 
@@ -720,7 +778,9 @@ def load_workbook_rows(path: Path) -> tuple[list[dict[str, Any]], str | None]:
                 description = max((value for value in values if re.search(r'[A-Za-z]', value)), key=len, default='')
                 numeric_candidates = [parse_float(value) for value in values]
                 quantity = next((value for value in numeric_candidates if is_meaningful_quantity(value)), None)
-                parsed_rows.append({'cells': values, 'description': description, 'quantity': quantity})
+                row = {'cells': values, 'description': description, 'quantity': quantity}
+                if is_valid_boq_row(row):
+                    parsed_rows.append(row)
             if parsed_rows:
                 break
         return parsed_rows, detected_sheet
@@ -730,7 +790,17 @@ def load_boq_rows(path: Path) -> tuple[list[dict[str, Any]], str | None]:
     extension = path.suffix.lower()
     if extension == ".pdf":
         if sdk_runtime_status()["enabled"]:
-            return extract_pdf_boq_rows_via_openai(path)
+            try:
+                rows, sheet = extract_pdf_boq_rows_via_openai(path)
+                rows = [row for row in rows if is_valid_boq_row(row)]
+                if len(rows) >= MIN_PARSED_PDF_ROWS:
+                    return rows, sheet
+                raise ValueError(f"OpenAI PDF extraction returned only {len(rows)} usable rows.")
+            except Exception as openai_exc:
+                try:
+                    return load_pdf_rows(path)
+                except Exception as local_exc:
+                    raise ValueError(f"OpenAI PDF extraction failed ({openai_exc}); local PDF extraction also failed ({local_exc}).") from openai_exc
         return load_pdf_rows(path)
     if extension in {".xlsx", ".xls"}:
         return load_workbook_rows(path)
@@ -778,29 +848,44 @@ def expand_scope_to_activities(wbs_category: str, scope_name: str) -> list[str]:
         return [f'{scope_name} - Procurement', f'{scope_name} - Installation', f'{scope_name} - Testing and Handover']
     if wbs_category == 'Outdoor Areas':
         return [f'{scope_name} - Coordination', f'{scope_name} - Execution', f'{scope_name} - Inspection and Signoff']
+    if wbs_category == 'Plumbing and Sanitary':
+        return [f'{scope_name} - First Fix', f'{scope_name} - Fixture or Equipment Installation', f'{scope_name} - Testing and Commissioning']
+    if wbs_category == 'Fire Fighting':
+        return [f'{scope_name} - Network Installation', f'{scope_name} - Device Installation', f'{scope_name} - Testing and Authority Inspection']
+    if wbs_category == 'Civil and Masonry':
+        return [f'{scope_name} - Setting Out and Preparation', f'{scope_name} - Execution', f'{scope_name} - Curing or Inspection']
     return [scope_name]
 
-def build_agent_output(agent: dict[str, Any], rows: list[dict[str, Any]]) -> tuple[list[dict[str, str]], int]:
+def build_agent_output(agent: dict[str, Any], rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
     matches: list[dict[str, Any]] = []
     for row in rows:
+        if not is_valid_boq_row(row):
+            continue
         assigned_agent = choose_agent_for_row(row['description'])
         if assigned_agent and assigned_agent['id'] == agent['id']:
             matches.append(row)
-    deduped: list[dict[str, str]] = []
+    deduped: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
-    for row in matches[:10]:
+    for row in matches:
         scope_name = clean_scope_name(row['description'], agent['wbs_category'])
         for activity_name in expand_scope_to_activities(agent['wbs_category'], scope_name):
             key = (agent['wbs_category'], activity_name)
             if key in seen:
                 continue
             seen.add(key)
-            deduped.append({'WBS': agent['wbs_category'], 'Activity Name': activity_name})
-            if len(deduped) >= 6:
+            activity = {
+                'WBS': agent['wbs_category'],
+                'Activity Name': activity_name,
+                'source_description': row.get('description', ''),
+            }
+            if row.get('quantity') is not None:
+                activity['source_quantity'] = row.get('quantity')
+            deduped.append(activity)
+            if len(deduped) >= MAX_LOCAL_ACTIVITIES_PER_AGENT:
                 break
-        if len(deduped) >= 6:
+        if len(deduped) >= MAX_LOCAL_ACTIVITIES_PER_AGENT:
             break
-    if not deduped:
+    if not deduped and not rows:
         deduped = deepcopy(agent['template_output'])
     return deduped, len(matches)
 
@@ -867,6 +952,34 @@ def compute_schedule_dates(schedule: list[dict[str, Any]], events: list[dict[str
     return resolved
 
 
+def quantity_duration_multiplier(quantity: Any) -> int:
+    try:
+        value = float(quantity)
+    except (TypeError, ValueError):
+        return 1
+    if value <= 0:
+        return 1
+    if value <= 10:
+        return 1
+    if value <= 50:
+        return 2
+    if value <= 200:
+        return 3
+    if value <= 1000:
+        return 4
+    return 6
+
+
+def estimate_activity_duration(output: dict[str, Any], default_duration: int) -> int:
+    multiplier = quantity_duration_multiplier(output.get("source_quantity"))
+    activity_name = normalize_text(output.get("Activity Name")).lower()
+    if any(keyword in activity_name for keyword in ["submittal", "approval", "inspection", "signoff"]):
+        multiplier = min(multiplier, 2)
+    if any(keyword in activity_name for keyword in ["testing", "commissioning", "handover"]):
+        multiplier = min(multiplier, 3)
+    return max(1, int(default_duration) * multiplier)
+
+
 def build_schedule(agents: list[dict[str, Any]], events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     mobilization_start = apply_delay_events(TODAY, events)
     mobilization_finish = mobilization_start + timedelta(days=4)
@@ -876,7 +989,8 @@ def build_schedule(agents: list[dict[str, Any]], events: list[dict[str, Any]]) -
     for agent in sorted(agents, key=lambda item: item['sequence']):
         durations = DURATION_RULES.get(agent['wbs_category'], [2] * max(len(agent['latest_output']), 1))
         for index, output in enumerate(agent['latest_output']):
-            duration = durations[index] if index < len(durations) else durations[-1]
+            default_duration = durations[index] if index < len(durations) else durations[-1]
+            duration = estimate_activity_duration(output, default_duration)
             if index == 0:
                 predecessor_names = []
                 for dependency_wbs in PACKAGE_DEPENDENCY_RULES.get(agent["wbs_category"], []):
@@ -981,7 +1095,16 @@ async def run_specialist_agent(agent: dict[str, Any], boq_rows: list[dict[str, A
     if openai_required and not sdk_output:
         agent["status"] = "failed"
         raise RuntimeError(f"OpenAI did not return valid output for {agent['agent_name']}.")
-    agent['latest_output'] = sdk_output or local_output
+    if sdk_output and len(sdk_output) >= len(local_output):
+        agent['latest_output'] = sdk_output
+    elif sdk_output:
+        agent['latest_output'] = normalize_specialist_activities([*sdk_output, *local_output], agent)
+        agent["last_sdk_warning"] = (
+            f"OpenAI returned {len(sdk_output)} activities for {matches} matching BOQ rows; "
+            f"local expansion supplemented it to {len(agent['latest_output'])} activities."
+        )
+    else:
+        agent['latest_output'] = local_output
     agent['boq_matches'] = matches
     agent['last_run_source'] = 'openai_chat_model' if sdk_output else 'local_fallback'
     agent['last_run'] = datetime.now().isoformat(timespec='seconds')
@@ -1004,6 +1127,14 @@ async def run_full_workflow_logic(state: dict[str, Any]) -> str:
     for agent in state['agents']:
         agent['status'] = 'queued'
     await asyncio.gather(*(run_specialist_agent(agent, boq_rows) for agent in state['agents']))
+    total_specialist_activities = sum(len(agent.get("latest_output", [])) for agent in state["agents"])
+    if total_specialist_activities == 0:
+        state["workflow"]["status"] = "failed"
+        state["planner"]["status"] = "failed"
+        raise HTTPException(
+            status_code=422,
+            detail="The BOQ was parsed, but no schedulable trade activities were classified. Review the BOQ extraction quality or add trade keywords before exporting.",
+        )
     fallback_schedule = build_schedule(state["agents"], state["timeline"]["events"])
     openai_required = sdk_runtime_status()["enabled"]
     try:
@@ -1021,6 +1152,12 @@ async def run_full_workflow_logic(state: dict[str, Any]) -> str:
     state['boq_upload']['detected_sheet'] = detected_sheet
     state['boq_upload']['status'] = 'BOQ parsed. All specialist agents completed, and the project manager prepared the Microsoft Project import workbook.'
     state['planner']['status'] = 'exported'
+    if sdk_schedule and len(sdk_schedule) < len(fallback_schedule):
+        state["planner"]["last_sdk_warning"] = (
+            f"OpenAI returned {len(sdk_schedule)} schedule rows, fewer than the "
+            f"{len(fallback_schedule)} rows in the scale-aware fallback schedule."
+        )
+        sdk_schedule = None
     state["planner"]["last_run_source"] = 'openai_chat_model' if sdk_schedule else 'local_fallback'
     state['planner']['last_run'] = datetime.now().isoformat(timespec='seconds')
     state['workflow']['status'] = 'completed'
@@ -1055,7 +1192,16 @@ def run_agent_logic(state: dict[str, Any], agent_id: str) -> str:
                 sdk_output = None
             if openai_required and not sdk_output:
                 raise RuntimeError(f"OpenAI did not return valid output for {agent['agent_name']}.")
-            agent['latest_output'] = sdk_output or latest_output
+            if sdk_output and len(sdk_output) >= len(latest_output):
+                agent['latest_output'] = sdk_output
+            elif sdk_output:
+                agent['latest_output'] = normalize_specialist_activities([*sdk_output, *latest_output], agent)
+                agent["last_sdk_warning"] = (
+                    f"OpenAI returned {len(sdk_output)} activities; local expansion supplemented it "
+                    f"to {len(agent['latest_output'])} activities."
+                )
+            else:
+                agent['latest_output'] = latest_output
             agent['boq_matches'] = matches
             agent["last_run_source"] = 'openai_chat_model' if sdk_output else 'local_fallback'
             agent['last_run'] = datetime.now().isoformat(timespec='seconds')
@@ -1074,6 +1220,12 @@ def run_agent_logic(state: dict[str, Any], agent_id: str) -> str:
             sdk_schedule = None
         if openai_required and not sdk_schedule:
             raise RuntimeError("OpenAI did not return valid project manager schedule output.")
+        if sdk_schedule and len(sdk_schedule) < len(fallback_schedule):
+            state["planner"]["last_sdk_warning"] = (
+                f"OpenAI returned {len(sdk_schedule)} schedule rows, fewer than the "
+                f"{len(fallback_schedule)} rows in the scale-aware fallback schedule."
+            )
+            sdk_schedule = None
         if sdk_schedule:
             state["timeline"]["schedule"] = sdk_schedule
             state["timeline"]["start_date"] = min(item["start_date"] for item in sdk_schedule)
