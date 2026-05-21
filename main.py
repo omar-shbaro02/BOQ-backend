@@ -3,8 +3,10 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import logging
 import os
 import re
+import traceback
 import zlib
 from copy import deepcopy
 from datetime import date, datetime, timedelta
@@ -40,6 +42,10 @@ MAX_ROWS_PER_SPECIALIST_PROMPT = 160
 MAX_LOCAL_ACTIVITIES_PER_AGENT = 300
 OPENAI_REQUEST_TIMEOUT_SECONDS = int(os.getenv("OPENAI_REQUEST_TIMEOUT_SECONDS", "90"))
 MIN_PARSED_PDF_ROWS = 5
+AGENT_RUN_CONCURRENCY = int(os.getenv("AGENT_RUN_CONCURRENCY", "3"))
+
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+logger = logging.getLogger("boq-agent-console")
 
 SPECIALIST_AGENTS = [
     {"id": "agent-1", "agent_name": "WBS_Extractor_01", "wbs_category": "Doors and Partitions", "sequence": 1, "task": "Extract BOQ scope for doors, glazing, drywall partitions, and metal partitions into scheduler-ready activities.", "keywords": ["door", "doors", "partition", "drywall", "gypsum partition", "glass partition", "ironmongery", "frame", "shutter"], "resource_list": "Doors Crew", "template_output": [{"WBS": "Doors and Partitions", "Activity Name": "Partitions - Marking"}, {"WBS": "Doors and Partitions", "Activity Name": "Partitions - Framing"}, {"WBS": "Doors and Partitions", "Activity Name": "Doors - Frame Installation"}, {"WBS": "Doors and Partitions", "Activity Name": "Doors - Shutter Hanging"}]},
@@ -815,6 +821,13 @@ def load_workbook_rows(path: Path) -> tuple[list[dict[str, Any]], str | None]:
 def load_boq_rows(path: Path) -> tuple[list[dict[str, Any]], str | None]:
     extension = path.suffix.lower()
     if extension == ".pdf":
+        local_exc: Exception | None = None
+        try:
+            return load_pdf_rows(path)
+        except Exception as exc:
+            local_exc = exc
+            logger.warning("Local PDF extraction failed for %s: %s", path.name, exc)
+
         if sdk_runtime_status()["enabled"]:
             try:
                 rows, sheet = extract_pdf_boq_rows_via_openai(path)
@@ -823,11 +836,8 @@ def load_boq_rows(path: Path) -> tuple[list[dict[str, Any]], str | None]:
                     return rows, sheet
                 raise ValueError(f"OpenAI PDF extraction returned only {len(rows)} usable rows.")
             except Exception as openai_exc:
-                try:
-                    return load_pdf_rows(path)
-                except Exception as local_exc:
-                    raise ValueError(f"OpenAI PDF extraction failed ({openai_exc}); local PDF extraction also failed ({local_exc}).") from openai_exc
-        return load_pdf_rows(path)
+                raise ValueError(f"Local PDF extraction failed ({local_exc}); OpenAI PDF extraction also failed ({openai_exc}).") from openai_exc
+        raise ValueError(f"Local PDF extraction failed ({local_exc}); OpenAI PDF extraction is not available.")
     if extension in {".xlsx", ".xls"}:
         return load_workbook_rows(path)
     raise ValueError(f"Unsupported BOQ format: {extension}")
@@ -1105,20 +1115,15 @@ def recalculate_timeline(state: dict[str, Any], action: str) -> None:
 
 async def run_specialist_agent(agent: dict[str, Any], boq_rows: list[dict[str, Any]]) -> None:
     agent['status'] = 'running'
+    logger.info("Starting %s", agent["agent_name"])
     await asyncio.sleep(0)
     local_output, matches = build_agent_output(agent, boq_rows)
-    openai_required = sdk_runtime_status()["enabled"]
+    sdk_output = None
     try:
         sdk_output = await asyncio.to_thread(run_specialist_sdk, agent, boq_rows)
     except Exception as exc:
         agent["last_sdk_error"] = str(exc)
-        agent["status"] = "failed"
-        if openai_required:
-            raise
-        sdk_output = None
-    if openai_required and sdk_output is None:
-        agent["status"] = "failed"
-        raise RuntimeError(f"OpenAI did not return valid output for {agent['agent_name']}.")
+        logger.warning("%s OpenAI enrichment failed; using local output: %s", agent["agent_name"], exc)
     if matches == 0:
         agent['latest_output'] = []
     elif sdk_output is not None and len(sdk_output) >= len(local_output):
@@ -1135,6 +1140,13 @@ async def run_specialist_agent(agent: dict[str, Any], boq_rows: list[dict[str, A
     agent['last_run_source'] = 'no_boq_matches' if matches == 0 else 'openai_chat_model' if sdk_output is not None else 'local_fallback'
     agent['last_run'] = datetime.now().isoformat(timespec='seconds')
     agent['status'] = 'completed'
+    logger.info(
+        "Completed %s with %s BOQ matches and %s activities from %s",
+        agent["agent_name"],
+        matches,
+        len(agent["latest_output"]),
+        agent["last_run_source"],
+    )
 
 
 async def run_full_workflow_logic(state: dict[str, Any]) -> str:
@@ -1144,10 +1156,17 @@ async def run_full_workflow_logic(state: dict[str, Any]) -> str:
     path = Path(stored_path)
     if not path.exists():
         raise HTTPException(status_code=404, detail='The uploaded BOQ file could not be found on disk.')
+    state["workflow"]["current_step"] = "Parsing uploaded BOQ"
+    state["workflow"]["last_error"] = None
+    save_state(state)
     try:
         boq_rows, detected_sheet = load_boq_rows(path)
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f'Failed to parse the uploaded BOQ file: {exc}') from exc
+    state["boq_upload"]["row_count"] = len(boq_rows)
+    state["boq_upload"]["detected_sheet"] = detected_sheet
+    state["workflow"]["current_step"] = f"Running {len(state['agents'])} specialist agents"
+    save_state(state)
     state['workflow']['status'] = 'running'
     state['planner']['status'] = 'waiting'
     for agent in state['agents']:
@@ -1155,28 +1174,37 @@ async def run_full_workflow_logic(state: dict[str, Any]) -> str:
         agent['latest_output'] = []
         agent['boq_matches'] = 0
         agent['last_run_source'] = None
-    await asyncio.gather(*(run_specialist_agent(agent, boq_rows) for agent in state['agents']))
+    save_state(state)
+    semaphore = asyncio.Semaphore(max(1, AGENT_RUN_CONCURRENCY))
+    state_lock = asyncio.Lock()
+
+    async def run_and_save(agent: dict[str, Any]) -> None:
+        async with semaphore:
+            await run_specialist_agent(agent, boq_rows)
+            async with state_lock:
+                save_state(state)
+
+    await asyncio.gather(*(run_and_save(agent) for agent in state['agents']))
     total_specialist_activities = sum(len(agent.get("latest_output", [])) for agent in state["agents"])
     if total_specialist_activities == 0:
         state["workflow"]["status"] = "failed"
         state["planner"]["status"] = "failed"
+        state["workflow"]["last_error"] = "The BOQ was parsed, but no schedulable trade activities were classified."
+        state["workflow"]["current_step"] = "Failed"
+        save_state(state)
         raise HTTPException(
             status_code=422,
             detail="The BOQ was parsed, but no schedulable trade activities were classified. Review the BOQ extraction quality or add trade keywords before exporting.",
         )
     fallback_schedule = build_schedule(state["agents"], state["timeline"]["events"])
-    openai_required = sdk_runtime_status()["enabled"]
+    state["workflow"]["current_step"] = "Building project manager schedule"
+    save_state(state)
     try:
         sdk_schedule = await asyncio.to_thread(run_project_manager_sdk, state, fallback_schedule)
     except Exception as exc:
         state["planner"]["last_sdk_error"] = str(exc)
-        state["planner"]["status"] = "failed"
-        if openai_required:
-            raise HTTPException(status_code=502, detail=f"Project manager OpenAI run failed: {exc}")
+        logger.warning("Project manager OpenAI enrichment failed; using fallback schedule: %s", exc)
         sdk_schedule = None
-    if openai_required and not sdk_schedule:
-        state["planner"]["status"] = "failed"
-        raise HTTPException(status_code=502, detail="Project manager did not return valid OpenAI schedule output.")
     state['boq_upload']['row_count'] = len(boq_rows)
     state['boq_upload']['detected_sheet'] = detected_sheet
     state['boq_upload']['status'] = 'BOQ parsed. All specialist agents completed, and the project manager prepared the Microsoft Project import workbook.'
@@ -1191,6 +1219,8 @@ async def run_full_workflow_logic(state: dict[str, Any]) -> str:
     state['planner']['last_run'] = datetime.now().isoformat(timespec='seconds')
     state['workflow']['status'] = 'completed'
     state['workflow']['last_run'] = datetime.now().isoformat(timespec='seconds')
+    state["workflow"]["current_step"] = "Completed"
+    state["workflow"]["last_error"] = None
     if sdk_schedule:
         state["timeline"]["schedule"] = sdk_schedule
         state["timeline"]["start_date"] = min(item["start_date"] for item in sdk_schedule)
@@ -1401,12 +1431,18 @@ async def run_workflow() -> dict[str, Any]:
             append_chat(STATE, "assistant", result)
         except HTTPException as exc:
             STATE["workflow"]["status"] = "failed"
+            STATE["workflow"]["current_step"] = "Failed"
+            STATE["workflow"]["last_error"] = str(exc.detail)
             STATE["planner"]["status"] = "failed"
             append_chat(STATE, "assistant", str(exc.detail))
+            logger.error("Workflow failed: %s", exc.detail)
         except Exception as exc:
             STATE["workflow"]["status"] = "failed"
+            STATE["workflow"]["current_step"] = "Failed"
+            STATE["workflow"]["last_error"] = str(exc)
             STATE["planner"]["status"] = "failed"
             append_chat(STATE, "assistant", f"Workflow failed: {exc}")
+            logger.error("Workflow crashed: %s\n%s", exc, traceback.format_exc())
         finally:
             save_state(STATE)
 

@@ -54,7 +54,8 @@
           ]
         }
       },
-      "json_schema_endpoint": "/api/agents/schemas"
+      "json_schema_endpoint": "/api/agents/schemas",
+      "last_run_source": null
     },
     {
       "id": "agent-2",
@@ -111,7 +112,8 @@
           ]
         }
       },
-      "json_schema_endpoint": "/api/agents/schemas"
+      "json_schema_endpoint": "/api/agents/schemas",
+      "last_run_source": null
     },
     {
       "id": "agent-3",
@@ -163,7 +165,8 @@
           ]
         }
       },
-      "json_schema_endpoint": "/api/agents/schemas"
+      "json_schema_endpoint": "/api/agents/schemas",
+      "last_run_source": null
     },
     {
       "id": "agent-4",
@@ -220,7 +223,8 @@
           ]
         }
       },
-      "json_schema_endpoint": "/api/agents/schemas"
+      "json_schema_endpoint": "/api/agents/schemas",
+      "last_run_source": null
     },
     {
       "id": "agent-5",
@@ -276,7 +280,8 @@
           ]
         }
       },
-      "json_schema_endpoint": "/api/agents/schemas"
+      "json_schema_endpoint": "/api/agents/schemas",
+      "last_run_source": null
     },
     {
       "id": "agent-6",
@@ -343,7 +348,8 @@
           ]
         }
       },
-      "json_schema_endpoint": "/api/agents/schemas"
+      "json_schema_endpoint": "/api/agents/schemas",
+      "last_run_source": null
     },
     {
       "id": "agent-7",
@@ -401,7 +407,8 @@
           ]
         }
       },
-      "json_schema_endpoint": "/api/agents/schemas"
+      "json_schema_endpoint": "/api/agents/schemas",
+      "last_run_source": null
     },
     {
       "id": "agent-8",
@@ -457,7 +464,8 @@
           ]
         }
       },
-      "json_schema_endpoint": "/api/agents/schemas"
+      "json_schema_endpoint": "/api/agents/schemas",
+      "last_run_source": null
     },
     {
       "id": "agent-9",
@@ -514,7 +522,8 @@
           ]
         }
       },
-      "json_schema_endpoint": "/api/agents/schemas"
+      "json_schema_endpoint": "/api/agents/schemas",
+      "last_run_source": null
     },
     {
       "id": "agent-10",
@@ -579,7 +588,8 @@
           ]
         }
       },
-      "json_schema_endpoint": "/api/agents/schemas"
+      "json_schema_endpoint": "/api/agents/schemas",
+      "last_run_source": null
     },
     {
       "id": "agent-11",
@@ -635,7 +645,8 @@
           ]
         }
       },
-      "json_schema_endpoint": "/api/agents/schemas"
+      "json_schema_endpoint": "/api/agents/schemas",
+      "last_run_source": null
     },
     {
       "id": "agent-12",
@@ -696,7 +707,8 @@
           ]
         }
       },
-      "json_schema_endpoint": "/api/agents/schemas"
+      "json_schema_endpoint": "/api/agents/schemas",
+      "last_run_source": null
     }
   ],
   "planner": {
@@ -714,7 +726,7 @@
     "status": "ready",
     "last_run": null,
     "export_file": "ms_project_schedule_import.xlsx",
-    "export_updated_at": "2026-05-21T15:07:54",
+    "export_updated_at": null,
     "sdk": {
       "provider": "openai",
       "framework": "openai-python",
@@ -735,7 +747,9 @@
   "workflow": {
     "status": "idle",
     "last_run": null,
-    "mode": "parallel-specialists-then-project-manager"
+    "mode": "parallel-specialists-then-project-manager",
+    "current_step": null,
+    "last_error": null
   },
   "boq_upload": {
     "filename": null,
@@ -747,7 +761,7 @@
   },
   "timeline": {
     "start_date": "2026-05-21",
-    "finish_date": "2026-05-25",
+    "finish_date": "2026-08-14",
     "schedule": [
       {
         "wbs": "Preliminaries",
@@ -760,14 +774,164 @@
         "package_sequence": 0
       },
       {
+        "wbs": "Ceiling",
+        "activity_name": "Supply and install gypsum ceiling bulkhead - Suspension Grid",
+        "duration_days": 6,
+        "predecessors": "Site Mobilization",
+        "resource_list": "Ceiling Crew",
+        "package_sequence": 3,
+        "start_date": "2026-05-26",
+        "finish_date": "2026-05-31"
+      },
+      {
+        "wbs": "Electrical",
+        "activity_name": "Install lighting conduits and wiring - First Fix",
+        "duration_days": 6,
+        "predecessors": "Site Mobilization",
+        "resource_list": "Electrical Crew",
+        "package_sequence": 7,
+        "start_date": "2026-05-26",
+        "finish_date": "2026-05-31"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Supply and install gypsum ceiling bulkhead - Board Fixing",
+        "duration_days": 6,
+        "predecessors": "Supply and install gypsum ceiling bulkhead - Suspension Grid",
+        "resource_list": "Ceiling Crew",
+        "package_sequence": 3,
+        "start_date": "2026-06-01",
+        "finish_date": "2026-06-06"
+      },
+      {
+        "wbs": "Electrical",
+        "activity_name": "Install lighting conduits and wiring - Wiring and Termination",
+        "duration_days": 8,
+        "predecessors": "Install lighting conduits and wiring - First Fix",
+        "resource_list": "Electrical Crew",
+        "package_sequence": 7,
+        "start_date": "2026-06-01",
+        "finish_date": "2026-06-08"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Supply and install gypsum ceiling bulkhead - Finishing",
+        "duration_days": 4,
+        "predecessors": "Supply and install gypsum ceiling bulkhead - Board Fixing",
+        "resource_list": "Ceiling Crew",
+        "package_sequence": 3,
+        "start_date": "2026-06-07",
+        "finish_date": "2026-06-10"
+      },
+      {
+        "wbs": "Electrical",
+        "activity_name": "Install lighting conduits and wiring - Final Fix",
+        "duration_days": 6,
+        "predecessors": "Install lighting conduits and wiring - Wiring and Termination",
+        "resource_list": "Electrical Crew",
+        "package_sequence": 7,
+        "start_date": "2026-06-09",
+        "finish_date": "2026-06-14"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Install gypsum ceiling tiles to corridor - Suspension Grid",
+        "duration_days": 6,
+        "predecessors": "Supply and install gypsum ceiling bulkhead - Finishing",
+        "resource_list": "Ceiling Crew",
+        "package_sequence": 3,
+        "start_date": "2026-06-11",
+        "finish_date": "2026-06-16"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Install gypsum ceiling tiles to corridor - Board Fixing",
+        "duration_days": 6,
+        "predecessors": "Install gypsum ceiling tiles to corridor - Suspension Grid",
+        "resource_list": "Ceiling Crew",
+        "package_sequence": 3,
+        "start_date": "2026-06-17",
+        "finish_date": "2026-06-22"
+      },
+      {
+        "wbs": "Ceiling",
+        "activity_name": "Install gypsum ceiling tiles to corridor - Finishing",
+        "duration_days": 6,
+        "predecessors": "Install gypsum ceiling tiles to corridor - Board Fixing",
+        "resource_list": "Ceiling Crew",
+        "package_sequence": 3,
+        "start_date": "2026-06-23",
+        "finish_date": "2026-06-28"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Install ceramic floor tiles to sales area - Layout",
+        "duration_days": 6,
+        "predecessors": "Install gypsum ceiling tiles to corridor - Finishing",
+        "resource_list": "Flooring Crew",
+        "package_sequence": 4,
+        "start_date": "2026-06-29",
+        "finish_date": "2026-07-04"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Install ceramic floor tiles to sales area - Installation",
+        "duration_days": 12,
+        "predecessors": "Install ceramic floor tiles to sales area - Layout",
+        "resource_list": "Flooring Crew",
+        "package_sequence": 4,
+        "start_date": "2026-07-05",
+        "finish_date": "2026-07-16"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Install ceramic floor tiles to sales area - Grouting and Protection",
+        "duration_days": 6,
+        "predecessors": "Install ceramic floor tiles to sales area - Installation",
+        "resource_list": "Flooring Crew",
+        "package_sequence": 4,
+        "start_date": "2026-07-17",
+        "finish_date": "2026-07-22"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Install marble floor skirting - Layout",
+        "duration_days": 6,
+        "predecessors": "Install ceramic floor tiles to sales area - Grouting and Protection",
+        "resource_list": "Flooring Crew",
+        "package_sequence": 4,
+        "start_date": "2026-07-23",
+        "finish_date": "2026-07-28"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Install marble floor skirting - Installation",
+        "duration_days": 6,
+        "predecessors": "Install marble floor skirting - Layout",
+        "resource_list": "Flooring Crew",
+        "package_sequence": 4,
+        "start_date": "2026-07-29",
+        "finish_date": "2026-08-03"
+      },
+      {
+        "wbs": "Floor Finishes",
+        "activity_name": "Install marble floor skirting - Grouting and Protection",
+        "duration_days": 6,
+        "predecessors": "Install marble floor skirting - Installation",
+        "resource_list": "Flooring Crew",
+        "package_sequence": 4,
+        "start_date": "2026-08-04",
+        "finish_date": "2026-08-09"
+      },
+      {
         "wbs": "Closeout / Testing & Commissioning",
         "activity_name": "Testing, Snagging, and Handover",
         "duration_days": 5,
-        "predecessors": "",
+        "predecessors": "Install gypsum ceiling tiles to corridor - Finishing, Install marble floor skirting - Grouting and Protection, Install lighting conduits and wiring - Final Fix",
         "resource_list": "Project Team",
         "package_sequence": 99,
-        "start_date": "2026-05-21",
-        "finish_date": "2026-05-25"
+        "start_date": "2026-08-10",
+        "finish_date": "2026-08-14"
       }
     ],
     "events": []
@@ -776,16 +940,12 @@
     {
       "role": "assistant",
       "content": "Upload a BOQ workbook, then run the workflow to launch all specialist agents together and generate the Microsoft Project export."
-    },
-    {
-      "role": "assistant",
-      "content": "Upload a BOQ workbook before running the workflow."
     }
   ],
   "project_summary": {
-    "total_duration_days": 10,
+    "total_duration_days": 106,
     "delay_events": 0,
     "last_action": "Dashboard initialized",
-    "export_rows": 2
+    "export_rows": 17
   }
 }
