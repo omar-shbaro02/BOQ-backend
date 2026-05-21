@@ -106,13 +106,33 @@ def seed_state() -> dict[str, Any]:
         agent_state = deepcopy(agent)
         agent_state["status"] = "ready"
         agent_state["boq_matches"] = 0
-        agent_state["latest_output"] = deepcopy(agent["template_output"])
+        agent_state["latest_output"] = []
         agent_state["last_run"] = None
         agents.append(agent_state)
     schedule = build_schedule(agents, [])
     state = {"agents": agents, "planner": {**deepcopy(PLANNER_AGENT), "status": "ready", "last_run": None, "export_file": MS_PROJECT_EXPORT_FILE.name, "export_updated_at": None}, "workflow": {"status": "idle", "last_run": None, "mode": "parallel-specialists-then-project-manager"}, "boq_upload": {"filename": None, "stored_path": None, "uploaded_at": None, "status": "No BOQ uploaded yet", "row_count": 0, "detected_sheet": None}, "timeline": {"start_date": TODAY.isoformat(), "finish_date": schedule[-1]["finish_date"], "schedule": schedule, "events": []}, "chat_history": [{"role": "assistant", "content": "Upload a BOQ workbook, then run the workflow to launch all specialist agents together and generate the Microsoft Project export."}], "project_summary": {"total_duration_days": sum(item["duration_days"] for item in schedule), "delay_events": 0, "last_action": "Dashboard initialized", "export_rows": len(schedule)}}
     attach_agent_contracts(state)
     return state
+
+
+def sanitize_state_outputs(state: dict[str, Any], *, reset_running_workflow: bool = False) -> bool:
+    changed = False
+    for agent in state.get("agents", []):
+        matches = int(agent.get("boq_matches") or 0)
+        latest_output = agent.get("latest_output")
+        if matches == 0 and latest_output:
+            agent["latest_output"] = []
+            agent["last_run_source"] = "no_boq_matches"
+            changed = True
+        if agent.get("status") == "queued" and state.get("workflow", {}).get("status") != "running":
+            agent["status"] = "ready"
+            changed = True
+
+    workflow = state.get("workflow")
+    if reset_running_workflow and isinstance(workflow, dict) and workflow.get("status") == "running":
+        workflow["status"] = "failed"
+        changed = True
+    return changed
 
 
 def load_state() -> dict[str, Any]:
@@ -132,7 +152,9 @@ def load_state() -> dict[str, Any]:
             existing[key] = deepcopy(seeded_agent[key])
         existing.setdefault("status", "ready")
         existing.setdefault("boq_matches", 0)
-        existing.setdefault("latest_output", deepcopy(seeded_agent["template_output"]))
+        existing.setdefault("latest_output", [])
+        if existing.get("boq_matches", 0) == 0 and existing.get("latest_output") == seeded_agent["template_output"]:
+            existing["latest_output"] = []
         existing.setdefault("last_run", None)
     state.setdefault("planner", seeded["planner"])
     state["planner"]["id"] = PLANNER_AGENT["id"]
@@ -155,6 +177,7 @@ def load_state() -> dict[str, Any]:
     state["timeline"].setdefault("events", [])
     state.setdefault("chat_history", seeded["chat_history"])
     state.setdefault("project_summary", seeded["project_summary"])
+    sanitize_state_outputs(state, reset_running_workflow=True)
     recalculate_timeline(state, state["project_summary"].get("last_action", "State loaded"))
     attach_agent_contracts(state)
     save_state(state)
@@ -162,6 +185,7 @@ def load_state() -> dict[str, Any]:
 
 
 def save_state(state: dict[str, Any]) -> None:
+    sanitize_state_outputs(state)
     recalculate_timeline(state, state["project_summary"].get("last_action", "State saved"))
     refresh_ms_project_export(state)
     attach_agent_contracts(state)
@@ -391,7 +415,7 @@ def select_boq_rows_for_agent(agent: dict[str, Any], boq_rows: list[dict[str, An
         scored.sort(key=lambda item: (-item[0], item[1]))
         return [row for _, _, row in scored[:limit]]
 
-    return [row for row in boq_rows if is_valid_boq_row(row)][:limit]
+    return []
 
 
 def normalize_project_manager_schedule(value: Any, fallback_schedule: list[dict[str, Any]], events: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -466,8 +490,10 @@ def build_project_manager_sdk_agent() -> Any:
 def run_specialist_sdk(agent_config: dict[str, Any], boq_rows: list[dict[str, Any]]) -> list[dict[str, Any]] | None:
     if not sdk_runtime_status()["enabled"]:
         return None
-    client = get_openai_client()
     boq_excerpt = select_boq_rows_for_agent(agent_config, boq_rows)
+    if not boq_excerpt:
+        return []
+    client = get_openai_client()
     prompt = json.dumps(
         {
             "agent_name": agent_config["agent_name"],
@@ -885,8 +911,6 @@ def build_agent_output(agent: dict[str, Any], rows: list[dict[str, Any]]) -> tup
                 break
         if len(deduped) >= MAX_LOCAL_ACTIVITIES_PER_AGENT:
             break
-    if not deduped and not rows:
-        deduped = deepcopy(agent['template_output'])
     return deduped, len(matches)
 
 
@@ -1092,10 +1116,12 @@ async def run_specialist_agent(agent: dict[str, Any], boq_rows: list[dict[str, A
         if openai_required:
             raise
         sdk_output = None
-    if openai_required and not sdk_output:
+    if openai_required and sdk_output is None:
         agent["status"] = "failed"
         raise RuntimeError(f"OpenAI did not return valid output for {agent['agent_name']}.")
-    if sdk_output and len(sdk_output) >= len(local_output):
+    if matches == 0:
+        agent['latest_output'] = []
+    elif sdk_output is not None and len(sdk_output) >= len(local_output):
         agent['latest_output'] = sdk_output
     elif sdk_output:
         agent['latest_output'] = normalize_specialist_activities([*sdk_output, *local_output], agent)
@@ -1106,7 +1132,7 @@ async def run_specialist_agent(agent: dict[str, Any], boq_rows: list[dict[str, A
     else:
         agent['latest_output'] = local_output
     agent['boq_matches'] = matches
-    agent['last_run_source'] = 'openai_chat_model' if sdk_output else 'local_fallback'
+    agent['last_run_source'] = 'no_boq_matches' if matches == 0 else 'openai_chat_model' if sdk_output is not None else 'local_fallback'
     agent['last_run'] = datetime.now().isoformat(timespec='seconds')
     agent['status'] = 'completed'
 
@@ -1126,6 +1152,9 @@ async def run_full_workflow_logic(state: dict[str, Any]) -> str:
     state['planner']['status'] = 'waiting'
     for agent in state['agents']:
         agent['status'] = 'queued'
+        agent['latest_output'] = []
+        agent['boq_matches'] = 0
+        agent['last_run_source'] = None
     await asyncio.gather(*(run_specialist_agent(agent, boq_rows) for agent in state['agents']))
     total_specialist_activities = sum(len(agent.get("latest_output", [])) for agent in state["agents"])
     if total_specialist_activities == 0:
@@ -1181,18 +1210,24 @@ async def run_full_workflow_logic(state: dict[str, Any]) -> str:
 def run_agent_logic(state: dict[str, Any], agent_id: str) -> str:
     for agent in state['agents']:
         if agent['id'] == agent_id:
-            latest_output, matches = build_agent_output(agent, [])
+            boq_rows: list[dict[str, Any]] = []
+            stored_path = state.get('boq_upload', {}).get('stored_path')
+            if stored_path and Path(stored_path).exists():
+                boq_rows, _ = load_boq_rows(Path(stored_path))
+            latest_output, matches = build_agent_output(agent, boq_rows)
             openai_required = sdk_runtime_status()["enabled"]
             try:
-                sdk_output = run_specialist_sdk(agent, [])
+                sdk_output = run_specialist_sdk(agent, boq_rows)
             except Exception as exc:
                 agent["last_sdk_error"] = str(exc)
                 if openai_required:
                     raise
                 sdk_output = None
-            if openai_required and not sdk_output:
+            if openai_required and sdk_output is None:
                 raise RuntimeError(f"OpenAI did not return valid output for {agent['agent_name']}.")
-            if sdk_output and len(sdk_output) >= len(latest_output):
+            if matches == 0:
+                agent['latest_output'] = []
+            elif sdk_output is not None and len(sdk_output) >= len(latest_output):
                 agent['latest_output'] = sdk_output
             elif sdk_output:
                 agent['latest_output'] = normalize_specialist_activities([*sdk_output, *latest_output], agent)
@@ -1203,7 +1238,7 @@ def run_agent_logic(state: dict[str, Any], agent_id: str) -> str:
             else:
                 agent['latest_output'] = latest_output
             agent['boq_matches'] = matches
-            agent["last_run_source"] = 'openai_chat_model' if sdk_output else 'local_fallback'
+            agent["last_run_source"] = 'no_boq_matches' if matches == 0 else 'openai_chat_model' if sdk_output is not None else 'local_fallback'
             agent['last_run'] = datetime.now().isoformat(timespec='seconds')
             agent['status'] = 'completed'
             recalculate_timeline(state, f"Ran {agent['wbs_category']} agent")
@@ -1308,6 +1343,7 @@ def health_check() -> dict[str, str]:
 
 @app.get('/api/dashboard')
 def get_dashboard() -> dict[str, Any]:
+    sanitize_state_outputs(STATE)
     attach_agent_contracts(STATE)
     return STATE
 
@@ -1399,8 +1435,9 @@ async def upload_boq(request: Request) -> dict[str, Any]:
     stored_path.write_bytes(file_bytes)
     for agent in STATE['agents']:
         agent['status'] = 'ready'
-        agent['latest_output'] = deepcopy(agent['template_output'])
+        agent['latest_output'] = []
         agent['boq_matches'] = 0
+        agent['last_run_source'] = None
     STATE['planner']['status'] = 'ready'
     STATE['workflow']['status'] = 'ready'
     STATE['boq_upload'] = {'filename': filename, 'stored_path': str(stored_path), 'uploaded_at': datetime.now().isoformat(timespec='seconds'), 'status': 'BOQ uploaded and ready for the full workflow run.', 'row_count': 0, 'detected_sheet': None}
